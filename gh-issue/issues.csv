@@ -1,0 +1,415 @@
+title,body,labels,assignees,milestone,type
+"[US-001] Project setup dan infrastructure","## User Story: Project setup dan infrastructure
+
+**Description:** As a developer, I want to set up the project with proper infrastructure so that development can begin.
+
+### Acceptance Criteria:
+- [ ] Initialize Go module dengan `go mod init`
+- [ ] Setup Gin framework sebagai HTTP router
+- [ ] Setup PostgreSQL connection dengan connection pooling
+- [ ] Setup Redis untuk rate limiting
+- [ ] Setup Wire atau Uber FX untuk dependency injection
+- [ ] Setup structured logging (misal: zap atau zerolog)
+- [ ] Setup basic metrics middleware
+- [ ] Create Makefile dengan target: `run`, `test`, `lint`, `migrate`, `seed`
+- [ ] Setup Docker Compose untuk PostgreSQL + Redis dev environment
+
+### Quality Gates:
+- `go test ./...`
+- `go vet ./...`
+- `gofmt -d .`","setup,infrastructure,high-priority",,1,bug
+"[US-002] Database schema dan migrations","## User Story: Database schema dan migrations
+
+**Description:** As a developer, I want to create database schema and migration system so that data Quran tersimpan terstruktur.
+
+### Acceptance Criteria:
+- [ ] Setup Dbmate atau Goose untuk migrations
+- [ ] Create migration untuk tabel `surahs`
+- [ ] Create migration untuk tabel `ayahs`
+- [ ] Create migration untuk tabel `juzs`
+- [ ] Create migration untuk tabel `pages`
+- [ ] Create migration untuk tabel `hizbs`
+- [ ] Create migration untuk tabel `rub_el_hizbs`
+- [ ] Create migration untuk tabel `manzils`
+- [ ] Create migration untuk tabel `rukus`
+- [ ] Add indexes untuk pencarian (GIN/trigram index)
+- [ ] Migration harus reversible (up/down)
+
+### Tables Schema:
+**surahs**: id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type, pages
+**ayahs**: id, surah_id, number_in_surah, text_uthmani, translation_indo, translation_en, juz_number, page_number, manzil_number, ruku_number, sajda_type, revelation_type","database,migration",,1,bug
+"[US-003] Seed data dari dataset yang sudah disiapkan","## User Story: Seed data dari dataset yang sudah disiapkan
+
+**Description:** As a developer, I want to seed Quran data dari dataset yang sudah ada so that API bisa return data yang valid.
+
+### Acceptance Criteria:
+- [ ] Create seeder script untuk import data dari dataset yang sudah disiapkan
+- [ ] Import semua 114 surat
+- [ ] Import semua 6236 ayat dengan lengkap (text, translations, navigasi data)
+- [ ] Import data 30 juz
+- [ ] Import data 604 halaman (sistem penomoran Madinah)
+- [ ] Import data 240 rub el hizb (8 per juz)
+- [ ] Import data 7 manzil
+- [ ] Import data 556 ruku
+- [ ] Seeder harus idempotent (bisa di-run berkali-kali)
+- [ ] Add logging progress saat seeding
+- [ ] Validasi data kelengkapan setelah seeding","data,seeding,high-priority",,1,bug
+"[US-004] Endpoint GET /surah - List semua surat","## User Story: Endpoint GET /surah - List semua surat
+
+**Description:** As an API consumer, I want to get list of all surahs so that I can browse Al-Quran content.
+
+### Acceptance Criteria:
+- [ ] GET /surah return array semua surat
+- [ ] Support query parameter: `?page=1&limit=10` untuk pagination
+- [ ] Response structure: `[{ id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type }]`
+- [ ] Return HTTP 200 dengan proper headers (Content-Type: application/json)
+- [ ] Return HTTP 500 jika database error
+
+### API Specification:
+```
+GET /surah?page=1&limit=10
+```","endpoint,surah,feature",,2,
+"[US-005] Endpoint GET /surah/:id - Detail surat","## User Story: Endpoint GET /surah/:id - Detail surat
+
+**Description:** As an API consumer, I want to get detail surat information so that I can see surat metadata.
+
+### Acceptance Criteria:
+- [ ] GET /surah/:id return detail surat tanpa ayat
+- [ ] Response structure: `{ id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type, pages: [start_page, end_page] }`
+- [ ] Return HTTP 404 jika surat tidak ditemukan
+
+### API Specification:
+```
+GET /surah/:id
+```","endpoint,surah,feature",,2,
+"[US-006] Endpoint GET /surah/:id/ayat - Ayat-ayat dalam surat","## User Story: Endpoint GET /surah/:id/ayat - Ayat-ayat dalam surat
+
+**Description:** As an API consumer, I want to get all ayahs in a surah so that I can read complete surah content.
+
+### Acceptance Criteria:
+- [ ] GET /surah/:id/ayat return array ayat dalam surat
+- [ ] Support query parameter: `?lang=id` atau `?lang=en` (default: id)
+- [ ] Support query parameter: `?from=1&to=10` untuk range ayat (opsional)
+- [ ] Support query parameter: `?page=1&limit=20` untuk pagination
+- [ ] Response structure: `{ surah: { id, number, name_latin }, ayahs: [{ number, number_in_surah, text_uthmani, translation, juz, page, manzil, ruku, sajda }] }`
+- [ ] Return HTTP 400 jika `lang` tidak valid
+- [ ] Return HTTP 404 jika surat tidak ditemukan
+
+### API Specification:
+```
+GET /surah/:id/ayat?lang=id&from=1&to=10&page=1&limit=20
+```","endpoint,surah,ayah,feature",,2,
+"[US-007] Endpoint GET /surah/:id/ayat/:number - Ayat spesifik dalam surat","## User Story: Endpoint GET /surah/:id/ayat/:number - Ayat spesifik dalam surat
+
+**Description:** As an API consumer, I want to get specific ayah by surah and ayah number so that I can reference individual ayah.
+
+### Acceptance Criteria:
+- [ ] GET /surah/:id/ayat/:number return detail ayat
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ id, surah_id, number, number_in_surah, text_uthmani, translation, surah_info: { id, name_latin }, juz, page, manzil, ruku, sajda, revelation_type }`
+- [ ] Return HTTP 400 jika `lang` tidak valid
+- [ ] Return HTTP 404 jika ayat tidak ditemukan
+
+### API Specification:
+```
+GET /surah/:id/ayat/:number?lang=id
+```","endpoint,surah,ayah,feature",,2,
+"[US-008] Endpoint GET /ayah/:id - Detail ayat by global ID","## User Story: Endpoint GET /ayah/:id - Detail ayat by global ID
+
+**Description:** As an API consumer, I want to get ayah by global ID so that I can reference ayah across surahs.
+
+### Acceptance Criteria:
+- [ ] GET /ayah/:id return detail ayat by global ID (1-6236)
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure sama seperti US-007
+- [ ] Return HTTP 400 jika `lang` tidak valid
+- [ ] Return HTTP 404 jika ayat tidak ditemukan
+
+### API Specification:
+```
+GET /ayah/:id?lang=id
+```","endpoint,ayah,feature",,2,
+"[US-009] Endpoint GET /juz - List semua juz","## User Story: Endpoint GET /juz - List semua juz
+
+**Description:** As an API consumer, I want to get list of all juzs so that I can navigate Al-Quran by juz.
+
+### Acceptance Criteria:
+- [ ] GET /juz return array semua juz (1-30)
+- [ ] Response structure: `[{ juz_number, first_ayah_id, last_ayah_id, total_ayahs }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /juz
+```","endpoint,juz,feature",,3,
+"[US-010] Endpoint GET /juz/:number - Detail juz dengan ayat","## User Story: Endpoint GET /juz/:number - Detail juz dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a juz so that I can read complete juz content.
+
+### Acceptance Criteria:
+- [ ] GET /juz/:number return ayat-ayat dalam juz
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Support query parameter: `?page=1&limit=20` untuk pagination
+- [ ] Response structure: `{ juz: { juz_number }, ayahs: [{ number, surah_info, number_in_surah, text_uthmani, translation, page }] }`
+- [ ] Return HTTP 404 jika juz tidak valid (bukan 1-30)
+
+### API Specification:
+```
+GET /juz/:number?lang=id&page=1&limit=20
+```","endpoint,juz,feature",,3,
+"[US-011] Endpoint GET /page - List semua halaman","## User Story: Endpoint GET /page - List semua halaman
+
+**Description:** As an API consumer, I want to get list of all pages so that I can navigate Al-Quran by page.
+
+### Acceptance Criteria:
+- [ ] GET /page return array semua halaman (1-604)
+- [ ] Response structure: `[{ page_number, first_ayah_id, last_ayah_id, surahs: [{ id, name_latin }] }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /page
+```","endpoint,page,feature",,3,
+"[US-012] Endpoint GET /page/:number - Detail halaman dengan ayat","## User Story: Endpoint GET /page/:number - Detail halaman dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a page so that I can read complete page content.
+
+### Acceptance Criteria:
+- [ ] GET /page/:number return ayat-ayat dalam halaman
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ page: { page_number }, ayahs: [{ number, surah_info, number_in_surah, text_uthmani, translation }] }`
+- [ ] Return HTTP 404 jika halaman tidak valid (bukan 1-604)
+
+### API Specification:
+```
+GET /page/:number?lang=id
+```","endpoint,page,feature",,3,
+"[US-013] Endpoint GET /hizb - List semua hizb","## User Story: Endpoint GET /hizb - List semua hizb
+
+**Description:** As an API consumer, I want to get list of all hizbs so that I can navigate Al-Quran by hizb.
+
+### Acceptance Criteria:
+- [ ] GET /hizb return array semua hizb (1-60, atau 1-8 per juz)
+- [ ] Response structure: `[{ hizb_number, juz_number, first_ayah_id, last_ayah_id }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /hizb
+```","endpoint,hizb,feature",,3,
+"[US-014] Endpoint GET /hizb/:number - Detail hizb dengan ayat","## User Story: Endpoint GET /hizb/:number - Detail hizb dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a hizb so that I can read complete hizb content.
+
+### Acceptance Criteria:
+- [ ] GET /hizb/:number return ayat-ayat dalam hizb
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ hizb: { hizb_number, juz_number }, ayahs: [{ number, surah_info, number_in_surah, text_uthmani, translation }] }`
+- [ ] Return HTTP 404 jika hizb tidak valid
+
+### API Specification:
+```
+GET /hizb/:number?lang=id
+```","endpoint,hizb,feature",,3,
+"[US-015] Endpoint GET /rub-el-hizb - List semua rub el hizb","## User Story: Endpoint GET /rub-el-hizb - List semua rub el hizb
+
+**Description:** As an API consumer, I want to get list of all rub el hizbs (quarter hizb) so that I can navigate finely.
+
+### Acceptance Criteria:
+- [ ] GET /rub-el-hizb return array semua rub el hizb (1-240)
+- [ ] Response structure: `[{ id, hizb_number, quarter_number, juz_number, first_ayah_id, last_ayah_id }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /rub-el-hizb
+```","endpoint,hizb,feature",,3,
+"[US-016] Endpoint GET /rub-el-hizb/:number - Detail rub el hizb dengan ayat","## User Story: Endpoint GET /rub-el-hizb/:number - Detail rub el hizb dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a rub el hizb so that I can read quarter hizb content.
+
+### Acceptance Criteria:
+- [ ] GET /rub-el-hizb/:number return ayat-ayat dalam rub el hizb
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ rub_el_hizb: { id, hizb_number, quarter_number }, ayahs: [{ number, surah_info, number_in_surah, text_uthmani, translation }] }`
+- [ ] Return HTTP 404 jika rub el hizb tidak valid
+
+### API Specification:
+```
+GET /rub-el-hizb/:number?lang=id
+```","endpoint,hizb,feature",,3,
+"[US-017] Endpoint GET /manzil - List semua manzil","## User Story: Endpoint GET /manzil - List semua manzil
+
+**Description:** As an API consumer, I want to get list of all manzils so that I can navigate Al-Quran by manzil.
+
+### Acceptance Criteria:
+- [ ] GET /manzil return array semua manzil (1-7)
+- [ ] Response structure: `[{ manzil_number, first_ayah_id, last_ayah_id, total_ayahs }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /manzil
+```","endpoint,manzil,feature",,3,
+"[US-018] Endpoint GET /manzil/:number - Detail manzil dengan ayat","## User Story: Endpoint GET /manzil/:number - Detail manzil dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a manzil so that I can read complete manzil content.
+
+### Acceptance Criteria:
+- [ ] GET /manzil/:number return ayat-ayat dalam manzil
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ manzil: { manzil_number }, ayahs: [{ number, surah_info, number_in_surah, text_uthmani, translation }] }`
+- [ ] Return HTTP 404 jika manzil tidak valid (bukan 1-7)
+
+### API Specification:
+```
+GET /manzil/:number?lang=id
+```","endpoint,manzil,feature",,3,
+"[US-019] Endpoint GET /ruku - List semua ruku","## User Story: Endpoint GET /ruku - List semua ruku
+
+**Description:** As an API consumer, I want to get list of all rukus so that I can navigate Al-Quran by ruku.
+
+### Acceptance Criteria:
+- [ ] GET /ruku return array semua ruku (±556)
+- [ ] Support query parameter: `?surah_id=1` untuk filter per surat
+- [ ] Response structure: `[{ ruku_number, surah_id, surah_name, first_ayah_id, last_ayah_id, total_ayahs }]`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /ruku?surah_id=1
+```","endpoint,ruku,feature",,3,
+"[US-020] Endpoint GET /ruku/:id - Detail ruku dengan ayat","## User Story: Endpoint GET /ruku/:id - Detail ruku dengan ayat
+
+**Description:** As an API consumer, I want to get all ayahs in a ruku so that I can read complete ruku content.
+
+### Acceptance Criteria:
+- [ ] GET /ruku/:id return ayat-ayat dalam ruku
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Response structure: `{ ruku: { ruku_number, surah_info }, ayahs: [{ number, number_in_surah, text_uthmani, translation }] }`
+- [ ] Return HTTP 404 jika ruku tidak ditemukan
+
+### API Specification:
+```
+GET /ruku/:id?lang=id
+```","endpoint,ruku,feature",,3,
+"[US-021] Endpoint GET /search - Pencarian ayat dengan filter","## User Story: Endpoint GET /search - Pencarian ayat dengan filter
+
+**Description:** As an API consumer, I want to search ayahs by keyword with filters so that I can find specific content.
+
+### Acceptance Criteria:
+- [ ] GET /search?q=keyword untuk pencarian full-text
+- [ ] Support filter: `?surah_id=1` untuk limit ke surat tertentu
+- [ ] Support filter: `?juz=1` untuk limit ke juz tertentu
+- [ ] Support filter: `?manzil=1` untuk limit ke manzil tertentu
+- [ ] Support filter: `?lang=id` atau `?lang=en` untuk bahasa terjemahan (default: id)
+- [ ] Query parameter: `?page=1&limit=20` untuk pagination result
+- [ ] Pencarian menggunakan PostgreSQL ILIKE atau tsvector untuk case-insensitive search
+- [ ] Response structure: `{ query, total, page, limit, results: [{ id, surah_info, number, number_in_surah, text_uthmani, translation, juz, page }] }`
+- [ ] Return HTTP 400 jika parameter `q` kosong
+
+### API Specification:
+```
+GET /search?q=keyword&surah_id=1&juz=1&lang=id&page=1&limit=20
+```","endpoint,search,feature,high-priority",,4,
+"[US-022] Endpoint GET /random - Ayat random","## User Story: Endpoint GET /random - Ayat random
+
+**Description:** As an API consumer, I want to get a random ayah so that I can discover Quran content.
+
+### Acceptance Criteria:
+- [ ] GET /random return satu ayat random
+- [ ] Support query parameter: `?lang=id` atau `?lang=en`
+- [ ] Support query parameter: `?surah_id=1` untuk random dalam surat tertentu
+- [ ] Response structure: `{ ayah: { number, surah_info, number_in_surah, text_uthmani, translation, juz, page } }`
+- [ ] Return HTTP 200
+
+### API Specification:
+```
+GET /random?lang=id&surah_id=1
+```","endpoint,utility,feature",,4,
+"[US-023] Rate limiting middleware dengan Redis","## User Story: Rate limiting middleware dengan Redis
+
+**Description:** As an API owner, I want to implement rate limiting by IP using Redis so that API tidak disalahgunakan.
+
+### Acceptance Criteria:
+- [ ] Implement rate limiting middleware dengan Redis backend
+- [ ] Limit: 100 request per menit per IP
+- [ ] Return HTTP 429 Too Many Requests dengan headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`
+- [ ] Redis connection menggunakan connection pooling
+- [ ] Configurable limit lewat environment variable `RATE_LIMIT_PER_MINUTE`
+- [ ] Handle Redis connection failure gracefully (fallback to allow all)
+
+### Response Headers (429):
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1640995200
+Retry-After: 30
+```","middleware,security,redis,high-priority",,4,bug
+"[US-024] API Documentation dengan Scalar","## User Story: API Documentation dengan Scalar
+
+**Description:** As an API consumer, I want to access interactive API documentation so that I can explore endpoints easily.
+
+### Acceptance Criteria:
+- [ ] Setup Scalar untuk API documentation
+- [ ] Serve Scalar UI di endpoint /docs
+- [ ] Generate OpenAPI 3.0 spec dari annotations
+- [ ] Document semua endpoint dengan method, path, parameters, response examples
+- [ ] Include contoh response untuk setiap endpoint
+- [ ] Scalar UI harus standalone
+
+### API Specification:
+```
+GET /docs
+```","documentation,docs,feature",,5,
+"[US-025] Observability - Metrics endpoint","## User Story: Observability - Metrics endpoint
+
+**Description:** As an operator, I want to expose metrics so that I can monitor API health and performance.
+
+### Acceptance Criteria:
+- [ ] Expose Prometheus metrics at /metrics
+- [ ] Track: request count, request duration, error rate by endpoint
+- [ ] Track database connection pool stats
+- [ ] Track Redis connection stats
+- [ ] Track rate limiting: blocked requests count
+
+### API Specification:
+```
+GET /metrics
+```","observability,metrics,monitoring",,5,
+"[US-026] Health check endpoint","## User Story: Health check endpoint
+
+**Description:** As an operator/deployer, I want to check API health so that I can monitor service availability.
+
+### Acceptance Criteria:
+- [ ] GET /health return status API
+- [ ] Response structure: `{ status: "ok", timestamp: "...", version: "..." }`
+- [ ] GET /health/ready untuk readiness probe (check DB & Redis connection)
+- [ ] GET /health/live untuk liveness probe
+- [ ] Return HTTP 503 jika dependency tidak ready
+
+### API Specifications:
+```
+GET /health
+GET /health/ready
+GET /health/live
+```","endpoint,health,monitoring,high-priority",,5,
+"[US-027] CORS dan Security headers","## User Story: CORS dan Security headers
+
+**Description:** As an API owner, I want proper CORS dan security headers so that API bisa dikonsumsi dari frontend manapun.
+
+### Acceptance Criteria:
+- [ ] Setup CORS middleware untuk allow all origins (public API)
+- [ ] Add security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection`
+- [ ] Add `Access-Control-Allow-Origin: *`
+- [ ] Add `Access-Control-Allow-Headers: Content-Type, Authorization`
+- [ ] Handle OPTIONS preflight request properly
+
+### Security Headers:
+```
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type, Authorization
+```","middleware,security,cors",,5,enhancement
