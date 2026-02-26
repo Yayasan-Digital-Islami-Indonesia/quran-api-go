@@ -1,0 +1,16 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      DB_PATH: ./data/quran.db
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: "8080"
+      APP_VERSION: 1.0.0
+      LOG_LEVEL: info
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
