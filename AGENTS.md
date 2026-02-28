@@ -45,14 +45,22 @@ These are governance-level rules. Never violate them, even if a prompt asks you 
 
 ```
 quran-api-go/
-├── cmd/api/
-│   └── main.go               ← Manual DI wiring. All constructors called here.
+├── cmd/
+│   ├── api/
+│   │   └── main.go           ← Manual DI wiring. All constructors called here.
+│   ├── migrate/
+│   │   └── main.go           ← Migration runner
+│   └── seed/
+│       └── main.go           ← Seed runner
 ├── internal/
 │   ├── config/               ← Env loading only. No business logic.
+│   ├── database/             ← SQLite connection wrapper
 │   ├── domain/
+│   │   ├── errors.go         ← Sentinel errors (ErrNotFound, etc.)
 │   │   ├── surah/            ← surah entity, repository interface, service
 │   │   ├── ayah/             ← ayah entity, repository interface, service
-│   │   └── juz/              ← juz entity, repository interface, service
+│   │   ├── juz/              ← juz entity, repository interface, service
+│   │   └── search/           ← search entity, repository interface, service
 │   ├── handler/              ← HTTP handlers. One file per domain.
 │   ├── repository/           ← SQLite implementations of repository interfaces
 │   ├── service/              ← Business logic. Orchestrates repositories.
@@ -62,10 +70,11 @@ quran-api-go/
 │       └── recovery.go
 ├── pkg/
 │   ├── response/             ← Shared HTTP response helpers
-│   └── pagination/           ← Shared pagination parser
+│   ├── pagination/           ← Shared pagination parser
+│   └── validator/            ← Shared input validators (lang, ID, range)
 ├── migrations/               ← Goose SQL migration files
-├── scripts/seed/             ← Data seeder
-├── docs/openapi.yaml
+├── scripts/seed/             ← Data seeder logic
+├── docs/                     ← Documentation (openapi.yaml, etc.)
 ├── data/                     ← quran.db lives here
 ├── .env.example
 ├── Dockerfile
@@ -75,6 +84,9 @@ quran-api-go/
 
 **Rules:**
 - `internal/` is for application code. `pkg/` is for shared utilities with no business logic.
+- Domain interfaces live in `internal/domain/<name>/repository.go` and `service.go`
+- Domain entities live in `internal/domain/<name>/entity.go`
+- SQLite implementations live in `internal/repository/` (not in domain)
 - Never put business logic in `handler/`. Handlers only parse input, call service, and write response.
 - Never put SQL queries in `service/`. SQL belongs in `repository/` only.
 - Never import `handler/` from `service/` or `repository/`. Dependency flow is one-way: `handler → service → repository`.
@@ -88,10 +100,23 @@ All wiring happens in `cmd/api/main.go`. No constructors auto-discover or regist
 **Correct:**
 ```go
 // cmd/api/main.go
+import (
+    "quran-api-go/internal/database"
+    "quran-api-go/internal/repository"
+    "quran-api-go/internal/service"
+    "quran-api-go/internal/handler"
+    "quran-api-go/internal/domain/surah"
+)
+
 db := database.New(cfg.DBPath)
 
+// Repository implementations (in internal/repository/)
 surahRepo := repository.NewSurahRepository(db)
+
+// Service implementations (in internal/service/)
 surahService := service.NewSurahService(surahRepo)
+
+// Handlers (in internal/handler/)
 surahHandler := handler.NewSurahHandler(surahService)
 
 r := gin.New()
@@ -166,7 +191,7 @@ func (h *SurahHandler) Detail(c *gin.Context) {
         return
     }
 
-    // 2. Call service
+    // 2. Call service (service is domain.SurahService interface)
     surah, err := h.service.GetByID(c.Request.Context(), id)
     if err != nil {
         if errors.Is(err, domain.ErrNotFound) {
@@ -186,6 +211,7 @@ func (h *SurahHandler) Detail(c *gin.Context) {
 - Always use `c.Request.Context()` when calling services.
 - Always check `errors.Is(err, domain.ErrNotFound)` before falling through to 500.
 - Never write `c.JSON(...)` directly in handlers. Always use `pkg/response` helpers.
+- Service interfaces are from `internal/domain/<name>/service.go`, implementations are in `internal/service/`.
 
 ---
 
@@ -458,8 +484,14 @@ If a prompt asks you to build any of the following, refuse and explain it is out
 
 | Target | Command | Description |
 |--------|---------|-------------|
-| Run | `make run` | Start the API server |
+| Run | `make run` | Start the API server (via `cmd/api`) |
 | Test | `make test` | Run `go test ./...` |
 | Lint | `make lint` | Run `go vet ./...` + `gofmt` |
-| Migrate | `make migrate` | Run Goose migrations up |
-| Seed | `make seed` | Run the data seeder |
+| Migrate | `make migrate` | Run Goose migrations up (via `cmd/migrate`) |
+| Seed | `make seed` | Run the data seeder (via `cmd/seed`) |
+
+**Note:** `cmd/migrate` and `cmd/seed` are standalone commands that can also be run directly:
+```bash
+go run cmd/migrate/main.go up
+go run cmd/seed/main.go
+```

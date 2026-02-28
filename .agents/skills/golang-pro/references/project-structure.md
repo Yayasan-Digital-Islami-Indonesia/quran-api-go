@@ -1,5 +1,17 @@
 # Project Structure and Module Management
 
+> **NOTE: quran-api-go Specific Structure**
+> This is a general reference. For quran-api-go, the actual structure differs:
+> - `cmd/` contains `api/`, `migrate/`, and `seed/` (not `server/`)
+> - `internal/domain/` contains entity, repository interface, and service interface per domain
+> - `internal/database/` wraps SQLite connection
+> - `internal/repository/` contains SQLite implementations
+> - `internal/service/` contains business logic implementations
+> - `pkg/validator/` contains shared input validators
+> - See `AGENTS.md` for the authoritative quran-api-go structure.
+
+---
+
 ## Standard Project Layout
 
 ```
