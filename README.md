@@ -146,11 +146,3 @@ Lihat [CONTRIBUTING.md](CONTRIBUTING.md) untuk detail.
 ## License
 
 MIT
-
----
-
-<div align="center">
-
-**Dibuat untuk Ilmunara Super App**
-
-</div>
