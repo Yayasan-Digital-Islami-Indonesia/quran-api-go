@@ -11,6 +11,9 @@
   <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go" alt="Go"></a>
   <a href="https://www.sqlite.org/"><img src="https://img.shields.io/badge/SQLite-FTS5-07405E?style=flat&logo=sqlite&logoColor=white" alt="SQLite"></a>
 </p>
+
+</div>
+
 ---
 
 **Quran API Go** adalah API internal untuk super app Ilmunara. Menyediakan 114 surah, 6.236 ayat, 30 juz dengan terjemahan ID/EN.
