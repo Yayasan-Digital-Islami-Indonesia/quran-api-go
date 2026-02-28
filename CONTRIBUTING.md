@@ -47,28 +47,30 @@ Pekerjaan yang di luar scope atau belum disetujui tidak akan di-merge, terlepas 
 
 ### Prasyarat
 
-- Go 1.21+
-- Docker & Docker Compose
-- `make` (untuk Makefile targets)
+- Go 1.21+ — [install](https://go.dev/dl/)
+- `make` — biasanya sudah terinstall (Linux/macOS). Windows: lewat WSL.
+- Docker & Docker Compose (opsional) — [install](https://docs.docker.com/get-docker/) — hanya jika ingin jalankan dalam container
 
 ### Setup
 
 ```bash
 # 1. Fork lalu clone repo
-git clone https://github.com/<username-kamu>/quran-api-go.git
+git clone https://github.com/Yayasan-Digital-Islami-Indonesia/quran-api-go
 cd quran-api-go
 
 # 2. Salin environment variables
 cp .env.example .env
 
-# 3. Jalankan dependensi (PostgreSQL)
-docker compose up -d
+# 3. Buat directory data (untuk SQLite)
+mkdir -p data
 
-# 4. Jalankan migrasi dan seed data
+# 4. Jalankan migrasi (membuat quran.db)
 make migrate
+
+# 5. Seed data
 make seed
 
-# 5. Jalankan dev server
+# 6. Jalankan dev server
 make run
 ```
 
