@@ -10,6 +10,9 @@
   <a href="https://discord.gg/hJtr47KXaK"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FhJtr47KXaK%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&suffix=%20members&logo=discord&logoColor=white&label=%20&color=7389D8&labelColor=6A7EC2"></a>
   <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go" alt="Go"></a>
   <a href="https://www.sqlite.org/"><img src="https://img.shields.io/badge/SQLite-FTS5-07405E?style=flat&logo=sqlite&logoColor=white" alt="SQLite"></a>
+  <a href="https://github.com/Yayasan-Digital-Islami-Indonesia/quran-api-go/network/members"><img src="https://img.shields.io/github/forks/Yayasan-Digital-Islami-Indonesia/quran-api-go?style=flat&logo=github&logoColor=white&label=Fork" alt="Forks"></a>
+  <a href="https://github.com/Yayasan-Digital-Islami-Indonesia/quran-api-go/stargazers"><img src="https://img.shields.io/github/stars/Yayasan-Digital-Islami-Indonesia/quran-api-go?style=flat&logo=github&logoColor=white&label=Star" alt="Stars"></a>
+  <a href="https://github.com/Yayasan-Digital-Islami-Indonesia/quran-api-go/issues"><img src="https://img.shields.io/github/issues/Yayasan-Digital-Islami-Indonesia/quran-api-go?style=flat&logo=github&logoColor=white&label=Issues" alt="Issues"></a>
 </p>
 
 </div>
