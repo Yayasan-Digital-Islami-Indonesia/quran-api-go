@@ -140,7 +140,7 @@ fx.New(
 ### Files
 - One file per domain per layer: `surah_repository.go`, `surah_service.go`, `surah_handler.go`
 - Middleware files are single-word: `cors.go`, `logging.go`, `recovery.go`
-- Migration files follow Goose convention: `00001_create_surahs.sql`
+- Migration files follow Goose convention: `00001_init.sql`
 
 ### Interfaces
 - Repository interfaces live in `internal/domain/<name>/repository.go`
@@ -176,10 +176,10 @@ Every handler must follow this exact structure:
 // internal/handler/surah_handler.go
 
 type SurahHandler struct {
-    service domain.SurahService
+    service surah.SurahService
 }
 
-func NewSurahHandler(service domain.SurahService) *SurahHandler {
+func NewSurahHandler(service surah.SurahService) *SurahHandler {
     return &SurahHandler{service: service}
 }
 
@@ -450,7 +450,7 @@ Load via `internal/config/config.go` using `os.Getenv`. Do not use third-party c
 ```go
 // Example: in-memory DB setup for repository test
 func setupTestDB(t *testing.T) *sql.DB {
-    db, err := sql.Open("sqlite", ":memory:")
+    db, err := database.New(":memory:")
     require.NoError(t, err)
     err = goose.Up(db, "../../migrations")
     require.NoError(t, err)
