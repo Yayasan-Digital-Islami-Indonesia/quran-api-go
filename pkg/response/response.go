@@ -1,7 +1,5 @@
 package response
 
-// TODO: implement — see issue #5
-//
 // All handlers must use these helpers. Never call c.JSON directly in handlers.
 //
 // Response formats:
