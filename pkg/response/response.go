@@ -41,9 +41,20 @@ func NotFound(c *gin.Context, message string) {
 }
 
 func BadRequest(c *gin.Context, message string) {
-	panic("not implemented")
+	error := gin.H{
+		"error":     message,
+		"code":      "bad request",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+	}
+
+	c.JSON(http.StatusBadRequest, error)
 }
 
 func InternalError(c *gin.Context) {
-	panic("not implemented")
+	error := gin.H{
+		"code":      "internal server error",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+	}
+
+	c.JSON(http.StatusInternalServerError, error)
 }
