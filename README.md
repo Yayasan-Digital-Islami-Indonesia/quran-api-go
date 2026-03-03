@@ -19,7 +19,7 @@
 
 ---
 
-**Quran API Go** adalah API internal untuk super app Ilmunara. Menyediakan 114 surah, 6.236 ayat, 30 juz dengan terjemahan ID/EN.
+REST API Al-Quran Indonesia. Menyediakan 114 surah, 6.236 ayat, 30 juz dengan terjemahan ID/EN.
 
 - Cepat — P95 < 200ms
 - Ringan — Single binary, SQLite embedded
