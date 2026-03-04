@@ -3,14 +3,17 @@ package repository_test
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"quran-api-go/internal/database"
+	"quran-api-go/internal/domain"
 	"quran-api-go/internal/repository"
 	"testing"
-
-	_ "modernc.org/sqlite"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite", ":memory:")
+	t.Helper()
+
+	db, err := database.New(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,8 +95,8 @@ func TestSurahRepository_FindByID_NotFound(t *testing.T) {
 	ctx := context.Background()
 
 	surah, err := repo.FindByID(ctx, 999)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 
 	if surah != nil {

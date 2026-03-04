@@ -10,7 +10,10 @@ import (
 
 	"quran-api-go/internal/config"
 	"quran-api-go/internal/database"
+	"quran-api-go/internal/handler"
 	"quran-api-go/internal/middleware"
+	"quran-api-go/internal/repository"
+	"quran-api-go/internal/service"
 )
 
 func main() {
@@ -34,25 +37,12 @@ func main() {
 		r.Use(middleware.CORS(cfg.AllowedOrigins))
 	}
 
-	// TODO: wire repositories, services, and handlers as issues are resolved.
-	//
-	// Pattern for each domain:
-	//   repo    := repository.NewSurahRepository(db)
-	//   svc     := service.NewSurahService(repo)
-	//   handler := handler.NewSurahHandler(svc)
-	//
-	// Endpoints to register (see docs/prd-quran-api-go-2nd.md):
-	//   r.GET("/surah",                    surahHandler.List)        // #8
-	//   r.GET("/surah/:id",                surahHandler.Detail)      // #8
-	//   r.GET("/surah/:id/ayat",           ayahHandler.BySurah)      // #9
-	//   r.GET("/surah/:id/ayat/:number",   ayahHandler.BySurahAndNumber) // #10
-	//   r.GET("/ayah/:id",                 ayahHandler.ByGlobalID)   // #11
-	//   r.GET("/juz",                      juzHandler.List)          // #15
-	//   r.GET("/juz/:number",              juzHandler.Detail)        // #15
-	//   r.GET("/search",                   searchHandler.Search)     // #16
-	//   r.GET("/random",                   ayahHandler.Random)       // #17
-	//   r.GET("/health",                   healthHandler.Health)     // #20
-	//   r.GET("/health/ready",             healthHandler.Ready)      // #20
+	surahRepo := repository.NewSurahRepository(db)
+	surahService := service.NewSurahService(surahRepo)
+	surahHandler := handler.NewSurahHandler(surahService)
+
+	r.GET("/surah", surahHandler.List)
+	r.GET("/surah/:id", surahHandler.Detail)
 
 	addr := fmt.Sprintf("%s:%s", cfg.ServerHost, cfg.ServerPort)
 	log.Info().Str("addr", addr).Msg("starting server")

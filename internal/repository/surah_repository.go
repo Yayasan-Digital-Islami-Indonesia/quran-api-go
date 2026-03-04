@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"quran-api-go/internal/domain"
 	surah "quran-api-go/internal/domain/surah"
 )
 
@@ -72,7 +73,7 @@ func (s *SurahRepository) FindByID(ctx context.Context, id int) (*surah.Surah, e
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, domain.ErrNotFound
 		}
 		return nil, err
 	}
