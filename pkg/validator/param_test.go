@@ -4,6 +4,7 @@ import "testing"
 
 func TestIOParamValidator(t *testing.T) {
 
+func TestIDParamValidator(t *testing.T) {
 	// Check if id is empty return error value
 	id := ""
 	id, err := ValidateIDParam(id)
