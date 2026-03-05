@@ -1,6 +1,5 @@
 package validator
 
-// TODO: implement — see issue #12
 //
 // ValidateLang checks that lang is "id" or "en".
 // Returns "id" as the default when lang is empty.
