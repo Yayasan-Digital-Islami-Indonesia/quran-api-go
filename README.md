@@ -30,7 +30,7 @@ REST API Al-Quran Indonesia. Menyediakan 114 surah, 6.236 ayat, 30 juz dengan te
 ## Quick Start
 
 ```bash
-git clone https://github.com/quran-api-go/quran-api-go.git
+git clone https://github.com/Yayasan-Digital-Islami-Indonesia/quran-api-go.git
 cd quran-api-go
 go mod download
 make migrate && make seed && make run
