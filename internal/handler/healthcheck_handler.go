@@ -23,3 +23,12 @@ func (h *HealthCheckHandler) HealthCheck(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, health)
 }
+
+func (h *HealthCheckHandler) ReadyCheck(c *gin.Context) {
+	ready, err := h.service.ReadyCheck(c)
+	if err != nil {
+		c.AbortWithStatus(http.StatusServiceUnavailable)
+		return
+	}
+	c.JSON(http.StatusOK, ready)
+}
