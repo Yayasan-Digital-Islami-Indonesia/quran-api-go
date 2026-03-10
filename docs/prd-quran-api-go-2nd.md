@@ -211,7 +211,7 @@ Implementasi dua endpoint surah dasar untuk menampilkan daftar dan detail surah.
 
 ---
 
-### #9 — GET /surah/:id/ayah — Ayah-ayah dalam surah
+### #9 — GET /surah/:id/ayah — Ayat-ayat dalam surah
 
 ```
 Labels: sprint-1, endpoint
@@ -228,7 +228,7 @@ Depends on: #5, #7
 
 ---
 
-### #10 — GET /surah/:id/ayah/:number — Ayah spesifik dalam surah
+### #10 — GET /surah/:id/ayah/:number — Ayat spesifik dalam surah
 
 ```
 Labels: sprint-1, endpoint

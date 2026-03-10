@@ -85,7 +85,7 @@ These commands must pass for every user story:
 - [ ] Response structure: `{ id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type, pages: [start_page, end_page] }`
 - [ ] Return HTTP 404 jika surat tidak ditemukan
 
-### US-006: Endpoint GET /surah/:id/ayah - Ayah-ayah dalam surat
+### US-006: Endpoint GET /surah/:id/ayah - Ayat-ayat dalam surat
 **Description:** As an API consumer, I want to get all ayahs in a surah so that I can read complete surah content.
 
 **Acceptance Criteria:**
@@ -97,7 +97,7 @@ These commands must pass for every user story:
 - [ ] Return HTTP 400 jika `lang` tidak valid
 - [ ] Return HTTP 404 jika surat tidak ditemukan
 
-### US-007: Endpoint GET /surah/:id/ayah/:number - Ayah spesifik dalam surat
+### US-007: Endpoint GET /surah/:id/ayah/:number - Ayat spesifik dalam surat
 **Description:** As an API consumer, I want to get specific ayah by surah and ayah number so that I can reference individual ayah.
 
 **Acceptance Criteria:**
@@ -316,8 +316,8 @@ These commands must pass for every user story:
 |--------|----------|-------------|
 | GET | `/surah` | List semua surat |
 | GET | `/surah/:id` | Detail surat |
-| GET | `/surah/:id/ayah` | Ayah-ayah dalam surat |
-| GET | `/surah/:id/ayah/:number` | Ayah spesifik dalam surat |
+| GET | `/surah/:id/ayah` | Ayat-ayat dalam surat |
+| GET | `/surah/:id/ayah/:number` | Ayat spesifik dalam surat |
 
 ### Ayah
 | Method | Endpoint | Description |
