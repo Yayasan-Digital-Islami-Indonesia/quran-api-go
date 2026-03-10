@@ -52,8 +52,8 @@ docker run -p 8080:8080 -e ALLOWED_ORIGINS=https://yourapp.com quran-api-go
 |--------|----------|-----------|
 | GET | `/surah` | Daftar 114 surah |
 | GET | `/surah/:id` | Detail surah |
-| GET | `/surah/:id/ayat` | Ayat dalam surah |
-| GET | `/surah/:id/ayat/:number` | Ayat spesifik |
+| GET | `/surah/:id/ayah` | Ayah dalam surah |
+| GET | `/surah/:id/ayah/:number` | Ayah spesifik |
 | GET | `/ayah/:id` | Ayat by global ID (1-6236) |
 | GET | `/juz` | Daftar 30 juz |
 | GET | `/juz/:number` | Ayat dalam juz |
@@ -61,6 +61,8 @@ docker run -p 8080:8080 -e ALLOWED_ORIGINS=https://yourapp.com quran-api-go
 | GET | `/random` | Ayat acak |
 | GET | `/health` | Health check |
 | GET | `/docs` | Dokumentasi API |
+
+Canonical route untuk resource ini memakai segmen `ayah`. Legacy alias `/surah/:id/ayat/:number` tetap didukung untuk kompatibilitas.
 
 ---
 
@@ -73,7 +75,7 @@ curl http://localhost:8080/surah
 
 **Baca Surah:**
 ```bash
-curl "http://localhost:8080/surah/1/ayat?lang=id"
+curl "http://localhost:8080/surah/1/ayah/1?lang=id"
 ```
 
 **Cari:**

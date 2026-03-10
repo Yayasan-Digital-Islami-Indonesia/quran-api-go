@@ -51,6 +51,7 @@ func main() {
 	r.GET("/health/ready", healthCheckHandler.ReadyCheck)
 	r.GET("/surah", surahHandler.List)
 	r.GET("/surah/:id", surahHandler.Detail)
+	r.GET("/surah/:id/ayah/:number", ayahHandler.BySurahAndNumber)
 	r.GET("/surah/:id/ayat/:number", ayahHandler.BySurahAndNumber)
 
 	addr := fmt.Sprintf("%s:%s", cfg.ServerHost, cfg.ServerPort)

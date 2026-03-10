@@ -15,6 +15,11 @@ import (
 	"quran-api-go/internal/handler"
 )
 
+const (
+	canonicalAyahPath = "/surah/1/ayah/1"
+	legacyAyatPath    = "/surah/1/ayat/1"
+)
+
 type MockAyahService struct {
 	GetBySurahAndNumberFunc func(ctx context.Context, surahID, number int) (*ayah.Ayah, error)
 }
@@ -56,6 +61,7 @@ func (m *MockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, e
 func setupRouter(h *handler.AyahHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
+	r.GET("/surah/:id/ayah/:number", h.BySurahAndNumber)
 	r.GET("/surah/:id/ayat/:number", h.BySurahAndNumber)
 	return r
 }
@@ -88,7 +94,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1", nil)
+		req, _ := http.NewRequest("GET", canonicalAyahPath, nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -145,7 +151,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/2?lang=en", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/2?lang=en", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -165,7 +171,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(&MockAyahService{}, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1?lang=fr", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/1?lang=fr", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -184,7 +190,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/999", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/999", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -208,7 +214,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/999/ayat/1", nil)
+		req, _ := http.NewRequest("GET", "/surah/999/ayah/1", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -227,12 +233,42 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1", nil)
+		req, _ := http.NewRequest("GET", canonicalAyahPath, nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
 		if w.Code != http.StatusInternalServerError {
 			t.Errorf("expected status 500, got %d", w.Code)
+		}
+	})
+
+	t.Run("Legacy Ayat Alias", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetBySurahAndNumberFunc: func(ctx context.Context, surahID, number int) (*ayah.Ayah, error) {
+				return &ayah.Ayah{
+					ID:             1,
+					SurahID:        1,
+					NumberInSurah:  1,
+					TextUthmani:    "Bismillah",
+					TranslationIdo: "Dengan nama Allah",
+				}, nil
+			},
+		}
+		mockSurahService := &MockSurahService{
+			GetByIDFunc: func(ctx context.Context, id int) (*surah.Surah, error) {
+				return &surah.Surah{ID: 1, NameLatin: "Al-Fatihah"}, nil
+			},
+		}
+
+		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
+		r := setupRouter(h)
+
+		req, _ := http.NewRequest("GET", legacyAyatPath, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
 		}
 	})
 }

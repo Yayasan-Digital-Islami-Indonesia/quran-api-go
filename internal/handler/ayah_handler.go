@@ -32,7 +32,7 @@ func (h *AyahHandler) BySurahAndNumber(c *gin.Context) {
 
 	number, err := strconv.Atoi(c.Param("number"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ayat number"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ayah number"})
 		return
 	}
 
