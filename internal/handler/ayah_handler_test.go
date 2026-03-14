@@ -10,12 +10,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"quran-api-go/internal/domain"
 	"quran-api-go/internal/domain/ayah"
 	"quran-api-go/internal/domain/surah"
 	"quran-api-go/internal/handler"
 )
 
 type MockAyahService struct {
+	GetBySurahFunc          func(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error)
 	GetBySurahAndNumberFunc func(ctx context.Context, surahID, number int) (*ayah.Ayah, error)
 }
 
@@ -24,6 +26,9 @@ func (m *MockAyahService) GetByID(ctx context.Context, id int) (*ayah.Ayah, erro
 }
 
 func (m *MockAyahService) GetBySurah(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error) {
+	if m.GetBySurahFunc != nil {
+		return m.GetBySurahFunc(ctx, surahID, from, to)
+	}
 	return nil, nil
 }
 
@@ -56,8 +61,198 @@ func (m *MockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, e
 func setupRouter(h *handler.AyahHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
+	r.GET("/surah/:id/ayat", h.BySurah)
 	r.GET("/surah/:id/ayat/:number", h.BySurahAndNumber)
 	return r
+}
+
+func TestBySurah(t *testing.T) {
+	t.Run("Success default lang returns full surah", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetBySurahFunc: func(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error) {
+				if surahID != 1 || from != 1 || to != 7 {
+					t.Fatalf("expected surahID=1 from=1 to=7, got surahID=%d from=%d to=%d", surahID, from, to)
+				}
+
+				return []ayah.Ayah{
+					{
+						ID:             1,
+						SurahID:        1,
+						NumberInSurah:  1,
+						TextUthmani:    "Bismillah",
+						TranslationIdo: "Dengan nama Allah",
+						TranslationEn:  "In the name of Allah",
+						JuzNumber:      1,
+					},
+					{
+						ID:             2,
+						SurahID:        1,
+						NumberInSurah:  2,
+						TextUthmani:    "Alhamdulillah",
+						TranslationIdo: "Segala puji",
+						TranslationEn:  "All praise",
+						JuzNumber:      1,
+					},
+				}, nil
+			},
+		}
+		mockSurahService := &MockSurahService{
+			GetByIDFunc: func(ctx context.Context, id int) (*surah.Surah, error) {
+				return &surah.Surah{
+					ID:            1,
+					Number:        1,
+					NameLatin:     "Al-Fatihah",
+					NumberOfAyahs: 7,
+				}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, mockSurahService))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+
+		var body map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		data, ok := body["data"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected data object, got %T", body["data"])
+		}
+
+		surahData, ok := data["surah"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected surah object, got %T", data["surah"])
+		}
+		if surahData["id"] != float64(1) || surahData["number"] != float64(1) || surahData["name_latin"] != "Al-Fatihah" {
+			t.Fatalf("unexpected surah payload: %v", surahData)
+		}
+
+		ayahsData, ok := data["ayahs"].([]any)
+		if !ok || len(ayahsData) != 2 {
+			t.Fatalf("expected 2 ayahs, got %v", data["ayahs"])
+		}
+
+		firstAyah, ok := ayahsData[0].(map[string]any)
+		if !ok {
+			t.Fatalf("expected ayah object, got %T", ayahsData[0])
+		}
+		if firstAyah["number"] != float64(1) || firstAyah["number_in_surah"] != float64(1) {
+			t.Fatalf("unexpected ayah numbering payload: %v", firstAyah)
+		}
+		if firstAyah["translation"] != "Dengan nama Allah" {
+			t.Fatalf("expected Indonesian translation, got %v", firstAyah["translation"])
+		}
+	})
+
+	t.Run("Success english lang with explicit range", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetBySurahFunc: func(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error) {
+				if surahID != 1 || from != 2 || to != 3 {
+					t.Fatalf("expected surahID=1 from=2 to=3, got surahID=%d from=%d to=%d", surahID, from, to)
+				}
+
+				return []ayah.Ayah{
+					{
+						ID:             2,
+						SurahID:        1,
+						NumberInSurah:  2,
+						TextUthmani:    "Alhamdulillah",
+						TranslationIdo: "Segala puji",
+						TranslationEn:  "All praise",
+						JuzNumber:      1,
+					},
+				}, nil
+			},
+		}
+		mockSurahService := &MockSurahService{
+			GetByIDFunc: func(ctx context.Context, id int) (*surah.Surah, error) {
+				return &surah.Surah{
+					ID:            1,
+					Number:        1,
+					NameLatin:     "Al-Fatihah",
+					NumberOfAyahs: 7,
+				}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, mockSurahService))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?lang=en&from=2&to=3", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+
+		var body map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		data := body["data"].(map[string]any)
+		ayahsData := data["ayahs"].([]any)
+		firstAyah := ayahsData[0].(map[string]any)
+		if firstAyah["translation"] != "All praise" {
+			t.Fatalf("expected English translation, got %v", firstAyah["translation"])
+		}
+	})
+
+	t.Run("Invalid lang", func(t *testing.T) {
+		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?lang=fr", nil))
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+	})
+
+	t.Run("Invalid range", func(t *testing.T) {
+		mockSurahService := &MockSurahService{
+			GetByIDFunc: func(ctx context.Context, id int) (*surah.Surah, error) {
+				return &surah.Surah{
+					ID:            1,
+					Number:        1,
+					NameLatin:     "Al-Fatihah",
+					NumberOfAyahs: 7,
+				}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, mockSurahService))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?from=3", nil))
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+	})
+
+	t.Run("Surah not found", func(t *testing.T) {
+		mockSurahService := &MockSurahService{
+			GetByIDFunc: func(ctx context.Context, id int) (*surah.Surah, error) {
+				return nil, domain.ErrNotFound
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, mockSurahService))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/999/ayat", nil))
+
+		if w.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d", w.Code)
+		}
+	})
 }
 
 func TestBySurahAndNumber(t *testing.T) {
