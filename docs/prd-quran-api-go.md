@@ -85,11 +85,11 @@ These commands must pass for every user story:
 - [ ] Response structure: `{ id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type, pages: [start_page, end_page] }`
 - [ ] Return HTTP 404 jika surat tidak ditemukan
 
-### US-006: Endpoint GET /surah/:id/ayat - Ayat-ayat dalam surat
+### US-006: Endpoint GET /surah/:id/ayah - Ayat-ayat dalam surat
 **Description:** As an API consumer, I want to get all ayahs in a surah so that I can read complete surah content.
 
 **Acceptance Criteria:**
-- [ ] GET /surah/:id/ayat return array ayat dalam surat
+- [ ] GET /surah/:id/ayah return array ayat dalam surat
 - [ ] Support query parameter: `?lang=id` atau `?lang=en` (default: id)
 - [ ] Support query parameter: `?from=1&to=10` untuk range ayat (opsional)
 - [ ] Support query parameter: `?page=1&limit=20` untuk pagination
@@ -97,11 +97,11 @@ These commands must pass for every user story:
 - [ ] Return HTTP 400 jika `lang` tidak valid
 - [ ] Return HTTP 404 jika surat tidak ditemukan
 
-### US-007: Endpoint GET /surah/:id/ayat/:number - Ayat spesifik dalam surat
+### US-007: Endpoint GET /surah/:id/ayah/:number - Ayat spesifik dalam surat
 **Description:** As an API consumer, I want to get specific ayah by surah and ayah number so that I can reference individual ayah.
 
 **Acceptance Criteria:**
-- [ ] GET /surah/:id/ayat/:number return detail ayat
+- [ ] GET /surah/:id/ayah/:number return detail ayat
 - [ ] Support query parameter: `?lang=id` atau `?lang=en`
 - [ ] Response structure: `{ id, surah_id, number, number_in_surah, text_uthmani, translation, surah_info: { id, name_latin }, juz, page, manzil, ruku, sajda, revelation_type }`
 - [ ] Return HTTP 400 jika `lang` tidak valid
@@ -316,8 +316,8 @@ These commands must pass for every user story:
 |--------|----------|-------------|
 | GET | `/surah` | List semua surat |
 | GET | `/surah/:id` | Detail surat |
-| GET | `/surah/:id/ayat` | Ayat-ayat dalam surat |
-| GET | `/surah/:id/ayat/:number` | Ayat spesifik dalam surat |
+| GET | `/surah/:id/ayah` | Ayat-ayat dalam surat |
+| GET | `/surah/:id/ayah/:number` | Ayat spesifik dalam surat |
 
 ### Ayah
 | Method | Endpoint | Description |

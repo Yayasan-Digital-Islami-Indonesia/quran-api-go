@@ -4,12 +4,12 @@ import "testing"
 
 func TestParse(t *testing.T) {
 	tests := []struct {
-		name        string
-		pageStr     string
-		limitStr    string
-		wantPage    int
-		wantLimit   int
-		wantOffset  int
+		name       string
+		pageStr    string
+		limitStr   string
+		wantPage   int
+		wantLimit  int
+		wantOffset int
 	}{
 		{
 			name:       "empty strings use defaults",

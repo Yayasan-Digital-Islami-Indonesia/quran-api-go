@@ -211,7 +211,7 @@ Implementasi dua endpoint surah dasar untuk menampilkan daftar dan detail surah.
 
 ---
 
-### #9 — GET /surah/:id/ayat — Ayat-ayat dalam surah
+### #9 — GET /surah/:id/ayah — Ayat-ayat dalam surah
 
 ```
 Labels: sprint-1, endpoint
@@ -228,7 +228,7 @@ Depends on: #5, #7
 
 ---
 
-### #10 — GET /surah/:id/ayat/:number — Ayat spesifik dalam surah
+### #10 — GET /surah/:id/ayah/:number — Ayat spesifik dalam surah
 
 ```
 Labels: sprint-1, endpoint
@@ -559,8 +559,8 @@ Verifikasi bahwa seluruh persyaratan governance terpenuhi sebelum API dirilis ke
 | #6 | Surah repository | 1 | #7, #12 |
 | #7 | Ayah repository | 1 | #6, #12 |
 | #8 | GET /surah & /surah/:id | 1 | #9, #10, #11 |
-| #9 | GET /surah/:id/ayat | 1 | #8, #10, #11 |
-| #10 | GET /surah/:id/ayat/:number | 1 | #8, #9, #11 |
+| #9 | GET /surah/:id/ayah | 1 | #8, #10, #11 |
+| #10 | GET /surah/:id/ayah/:number | 1 | #8, #9, #11 |
 | #11 | GET /ayah/:id | 1 | #8, #9, #10 |
 | #12 | Input validation middleware | 1 | #6, #7 |
 | #13 | Juz repository | 2 | #14 |
@@ -587,8 +587,8 @@ Verifikasi bahwa seluruh persyaratan governance terpenuhi sebelum API dirilis ke
 |--------|----------|-----------------|-------|--------|
 | GET | `/surah` | Halaman daftar surah | #8 | 1 |
 | GET | `/surah/:id` | Halaman detail surah | #8 | 1 |
-| GET | `/surah/:id/ayat` | Halaman baca surah | #9 | 1 |
-| GET | `/surah/:id/ayat/:number` | Referensi ayat | #10 | 1 |
+| GET | `/surah/:id/ayah` | Halaman baca surah | #9 | 1 |
+| GET | `/surah/:id/ayah/:number` | Referensi ayat | #10 | 1 |
 | GET | `/ayah/:id` | Ayat by global ID | #11 | 1 |
 | GET | `/juz` | Navigasi juz | #15 | 2 |
 | GET | `/juz/:number` | Halaman baca juz | #15 | 2 |
