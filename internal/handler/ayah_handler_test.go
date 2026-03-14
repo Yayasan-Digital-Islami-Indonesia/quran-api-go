@@ -61,8 +61,8 @@ func (m *MockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, e
 func setupRouter(h *handler.AyahHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.GET("/surah/:id/ayat", h.BySurah)
-	r.GET("/surah/:id/ayat/:number", h.BySurahAndNumber)
+	r.GET("/surah/:id/ayah", h.BySurah)
+	r.GET("/surah/:id/ayah/:number", h.BySurahAndNumber)
 	return r
 }
 
@@ -110,7 +110,7 @@ func TestBySurah(t *testing.T) {
 		r := setupRouter(handler.NewAyahHandler(mockAyahService, mockSurahService))
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat", nil))
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayah", nil))
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("expected status 200, got %d", w.Code)
@@ -185,7 +185,7 @@ func TestBySurah(t *testing.T) {
 		r := setupRouter(handler.NewAyahHandler(mockAyahService, mockSurahService))
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?lang=en&from=2&to=3", nil))
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayah?lang=en&from=2&to=3", nil))
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("expected status 200, got %d", w.Code)
@@ -208,7 +208,7 @@ func TestBySurah(t *testing.T) {
 		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, &MockSurahService{}))
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?lang=fr", nil))
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayah?lang=fr", nil))
 
 		if w.Code != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", w.Code)
@@ -230,7 +230,7 @@ func TestBySurah(t *testing.T) {
 		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, mockSurahService))
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayat?from=3", nil))
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/1/ayah?from=3", nil))
 
 		if w.Code != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", w.Code)
@@ -247,7 +247,7 @@ func TestBySurah(t *testing.T) {
 		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, mockSurahService))
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/999/ayat", nil))
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah/999/ayah", nil))
 
 		if w.Code != http.StatusNotFound {
 			t.Fatalf("expected status 404, got %d", w.Code)
@@ -283,7 +283,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/1", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -340,7 +340,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/2?lang=en", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/2?lang=en", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -360,7 +360,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(&MockAyahService{}, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1?lang=fr", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/1?lang=fr", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -379,7 +379,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/999", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/999", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -403,7 +403,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, mockSurahService)
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/999/ayat/1", nil)
+		req, _ := http.NewRequest("GET", "/surah/999/ayah/1", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -422,7 +422,7 @@ func TestBySurahAndNumber(t *testing.T) {
 		h := handler.NewAyahHandler(mockAyahService, &MockSurahService{})
 		r := setupRouter(h)
 
-		req, _ := http.NewRequest("GET", "/surah/1/ayat/1", nil)
+		req, _ := http.NewRequest("GET", "/surah/1/ayah/1", nil)
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
