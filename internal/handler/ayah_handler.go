@@ -2,8 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +36,24 @@ type AyahListItem struct {
 	Translation   string  `json:"translation"`
 	Juz           int     `json:"juz"`
 	Sajda         *string `json:"sajda"`
+}
+
+type AyahDetailResponse struct {
+	ID             int                 `json:"id"`
+	Number         int                 `json:"number"`
+	SurahID        int                 `json:"surah_id"`
+	NumberInSurah  int                 `json:"number_in_surah"`
+	TextUthmani    string              `json:"text_uthmani"`
+	Translation    string              `json:"translation"`
+	SurahInfo      AyahDetailSurahInfo `json:"surah_info"`
+	Juz            int                 `json:"juz"`
+	Sajda          *string             `json:"sajda"`
+	RevelationType *string             `json:"revelation_type"`
+}
+
+type AyahDetailSurahInfo struct {
+	ID        int    `json:"id"`
+	NameLatin string `json:"name_latin"`
 }
 
 func NewAyahHandler(ayahService ayah.AyahService, surahService surah.SurahService) *AyahHandler {
@@ -91,66 +107,70 @@ func (h *AyahHandler) BySurah(c *gin.Context) {
 	response.Success(c, newSurahAyahsResponse(*sur, ayahs, lang))
 }
 
+func (h *AyahHandler) Detail(c *gin.Context) {
+	ayahID, err := parseIDParam(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "invalid ayah id")
+		return
+	}
+
+	lang, err := validator.ValidateLang(c.Query("lang"))
+	if err != nil {
+		response.BadRequest(c, "lang must be 'id' or 'en'")
+		return
+	}
+
+	ay, err := h.ayahService.GetByID(c.Request.Context(), ayahID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "ayah not found")
+			return
+		}
+		response.InternalError(c)
+		return
+	}
+	if ay == nil {
+		response.NotFound(c, "ayah not found")
+		return
+	}
+
+	h.respondWithAyahDetail(c, *ay, lang)
+}
+
 func (h *AyahHandler) BySurahAndNumber(c *gin.Context) {
-	surahID, err := strconv.Atoi(c.Param("id"))
+	surahID, err := parseIDParam(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid surah id"})
+		response.BadRequest(c, "invalid surah id")
 		return
 	}
 
-	number, err := strconv.Atoi(c.Param("number"))
+	number, err := parseIDParam(c.Param("number"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ayah number"})
+		response.BadRequest(c, "invalid ayah number")
 		return
 	}
 
-	lang := c.DefaultQuery("lang", "id")
-	if lang != "id" && lang != "en" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid lang parameter, must be 'id' or 'en'"})
+	lang, err := validator.ValidateLang(c.Query("lang"))
+	if err != nil {
+		response.BadRequest(c, "lang must be 'id' or 'en'")
 		return
 	}
 
 	ay, err := h.ayahService.GetBySurahAndNumber(c.Request.Context(), surahID, number)
 	if err != nil {
-		log.Printf("error fetching ayah: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch ayah"})
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "ayah not found")
+			return
+		}
+		response.InternalError(c)
 		return
 	}
 	if ay == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ayah not found"})
+		response.NotFound(c, "ayah not found")
 		return
 	}
 
-	sur, err := h.surahService.GetByID(c.Request.Context(), surahID)
-	if err != nil {
-		log.Printf("error fetching surah info: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch surah info"})
-		return
-	}
-	if sur == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "surah not found"})
-		return
-	}
-
-	translation := ay.TranslationIdo
-	if lang == "en" {
-		translation = ay.TranslationEn
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"id":              ay.ID,
-		"surah_id":        ay.SurahID,
-		"number_in_surah": ay.NumberInSurah,
-		"text_uthmani":    ay.TextUthmani,
-		"translation":     translation,
-		"surah_info": gin.H{
-			"id":         sur.ID,
-			"name_latin": sur.NameLatin,
-		},
-		"juz":             ay.JuzNumber,
-		"sajda":           ay.SajdaType,
-		"revelation_type": ay.RevelationType,
-	})
+	h.respondWithAyahDetail(c, *ay, lang)
 }
 
 func parseAyahRange(fromParam, toParam string, maxAyahs int) (int, int, error) {
@@ -210,55 +230,67 @@ func (h *AyahHandler) RandomAyah(c *gin.Context) {
 		surahID = 0
 	}
 
-	lang := c.DefaultQuery("lang", "id")
-	if lang != "id" && lang != "en" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid lang parameter, must be 'id' or 'en'"})
+	lang, err := validator.ValidateLang(c.Query("lang"))
+	if err != nil {
+		response.BadRequest(c, "lang must be 'id' or 'en'")
 		return
 	}
 
 	ay, err := h.ayahService.GetRandom(c.Request.Context(), surahID)
 	if err != nil {
-		log.Printf("error fetching ayah: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch ayah"})
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "ayah not found")
+			return
+		}
+		response.InternalError(c)
 		return
 	}
 	if ay == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ayah not found"})
+		response.NotFound(c, "ayah not found")
 		return
 	}
 
-	if surahID == 0 {
-		surahID = ay.SurahID
-	}
+	h.respondWithAyahDetail(c, *ay, lang)
+}
 
-	sur, err := h.surahService.GetByID(c.Request.Context(), surahID)
+func (h *AyahHandler) respondWithAyahDetail(c *gin.Context, ay ayah.Ayah, lang string) {
+	sur, err := h.surahService.GetByID(c.Request.Context(), ay.SurahID)
 	if err != nil {
-		log.Printf("error fetching surah info: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch surah info"})
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "surah not found")
+			return
+		}
+		response.InternalError(c)
 		return
 	}
 	if sur == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "surah not found"})
+		response.NotFound(c, "surah not found")
 		return
 	}
 
-	translation := ay.TranslationIdo
-	if lang == "en" {
-		translation = ay.TranslationEn
+	response.Success(c, newAyahDetailResponse(ay, *sur, lang))
+}
+
+func newAyahDetailResponse(item ayah.Ayah, sur surah.Surah, lang string) AyahDetailResponse {
+	return AyahDetailResponse{
+		ID:             item.ID,
+		Number:         item.ID,
+		SurahID:        item.SurahID,
+		NumberInSurah:  item.NumberInSurah,
+		TextUthmani:    item.TextUthmani,
+		Translation:    translationByLang(item, lang),
+		SurahInfo:      AyahDetailSurahInfo{ID: sur.ID, NameLatin: sur.NameLatin},
+		Juz:            item.JuzNumber,
+		Sajda:          item.SajdaType,
+		RevelationType: item.RevelationType,
+	}
+}
+
+func parseIDParam(raw string) (int, error) {
+	validated, err := validator.ValidateIDParam(raw)
+	if err != nil {
+		return 0, err
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id":              ay.ID,
-		"surah_id":        ay.SurahID,
-		"number_in_surah": ay.NumberInSurah,
-		"text_uthmani":    ay.TextUthmani,
-		"translation":     translation,
-		"surah_info": gin.H{
-			"id":         sur.ID,
-			"name_latin": sur.NameLatin,
-		},
-		"juz":             ay.JuzNumber,
-		"sajda":           ay.SajdaType,
-		"revelation_type": ay.RevelationType,
-	})
+	return strconv.Atoi(validated)
 }
