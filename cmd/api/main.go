@@ -51,6 +51,7 @@ func main() {
 	r.GET("/health/ready", healthCheckHandler.ReadyCheck)
 	r.GET("/surah", surahHandler.List)
 	r.GET("/surah/:id", surahHandler.Detail)
+	r.GET("/ayah/:id", ayahHandler.Detail)
 	r.GET("/surah/:id/ayah", ayahHandler.BySurah)
 	r.GET("/surah/:id/ayah/:number", ayahHandler.BySurahAndNumber)
 	r.GET("/random", ayahHandler.RandomAyah)
