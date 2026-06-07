@@ -19,6 +19,10 @@ tags:
     description: Surah (chapter) endpoints
   - name: Ayah
     description: Ayah (verse) endpoints
+  - name: Juz
+    description: Juz (part) endpoints
+  - name: Search
+    description: Full-text search endpoints
 
 paths:
   /health:
@@ -381,6 +385,226 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /juz:
+    get:
+      tags:
+        - Juz
+      summary: List all juz
+      description: Get a list of all 30 juz (parts) of the Quran
+      operationId: listJuzs
+      responses:
+        '200':
+          description: List of juz
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Juz'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /juz/{number}:
+    get:
+      tags:
+        - Juz
+      summary: Get juz by number
+      description: Get detailed information about a specific juz
+      operationId: getJuzByNumber
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Juz number (1-30)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+      responses:
+        '200':
+          description: Juz details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Juz'
+        '400':
+          description: Invalid juz number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Juz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /juz/{number}/ayah:
+    get:
+      tags:
+        - Juz
+      summary: Get ayahs by juz
+      description: Get all ayahs from a specific juz with pagination
+      operationId: getAyahsByJuz
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Juz number (1-30)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: lang
+          in: query
+          description: Translation language
+          schema:
+            type: string
+            enum: [id, en]
+            default: id
+      responses:
+        '200':
+          description: Juz ayahs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/JuzAyahsResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Juz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Search ayahs
+      description: Full-text search across Quran ayahs using FTS5
+      operationId: searchAyahs
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+            minLength: 1
+        - name: lang
+          in: query
+          description: Translation language
+          schema:
+            type: string
+            enum: [id, en]
+            default: id
+        - name: surah_id
+          in: query
+          description: Filter by surah ID
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 114
+        - name: juz
+          in: query
+          description: Filter by juz number
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     SuccessResponse:
@@ -582,3 +806,145 @@ components:
                 type: string
                 nullable: true
                 example: min
+
+    Juz:
+      type: object
+      required:
+        - id
+        - juz_number
+        - first_ayah_id
+        - last_ayah_id
+        - total_ayahs
+      properties:
+        id:
+          type: integer
+          example: 1
+        juz_number:
+          type: integer
+          minimum: 1
+          maximum: 30
+          example: 1
+        first_ayah_id:
+          type: integer
+          example: 1
+        last_ayah_id:
+          type: integer
+          example: 150
+        total_ayahs:
+          type: integer
+          example: 150
+
+    JuzAyahsResponse:
+      type: object
+      required:
+        - juz
+        - ayahs
+      properties:
+        juz:
+          type: object
+          required:
+            - juz_number
+            - total_ayahs
+          properties:
+            juz_number:
+              type: integer
+              example: 1
+            total_ayahs:
+              type: integer
+              example: 150
+        ayahs:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - surah_id
+              - surah_name
+              - number_in_surah
+              - text_uthmani
+              - translation
+              - juz_number
+            properties:
+              id:
+                type: integer
+                example: 1
+              surah_id:
+                type: integer
+                example: 1
+              surah_name:
+                type: string
+                example: Al-Fatihah
+              number_in_surah:
+                type: integer
+                example: 1
+              text_uthmani:
+                type: string
+                example: بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              translation:
+                type: string
+                example: Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+              juz_number:
+                type: integer
+                example: 1
+
+    SearchResponse:
+      type: object
+      required:
+        - query
+        - results
+        - total
+        - page
+        - limit
+      properties:
+        query:
+          type: string
+          example: rahman
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - surah_id
+              - surah_info
+              - number_in_surah
+              - text_uthmani
+              - translation
+              - juz_number
+            properties:
+              id:
+                type: integer
+                example: 1
+              surah_id:
+                type: integer
+                example: 1
+              surah_info:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name_latin:
+                    type: string
+                    example: Al-Fatihah
+              number_in_surah:
+                type: integer
+                example: 1
+              text_uthmani:
+                type: string
+                example: بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              translation:
+                type: string
+                example: Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+              juz_number:
+                type: integer
+                example: 1
+        total:
+          type: integer
+          example: 5
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
