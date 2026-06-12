@@ -17,7 +17,7 @@ definitions:
       surah_id:
         type: integer
       surah_info:
-        $ref: '#/definitions/handler.AyahDetailSurahInfo'
+        $ref: "#/definitions/handler.AyahDetailSurahInfo"
       text_uthmani:
         type: string
       translation:
@@ -66,10 +66,10 @@ definitions:
     properties:
       ayahs:
         items:
-          $ref: '#/definitions/handler.JuzAyahListItem'
+          $ref: "#/definitions/handler.JuzAyahListItem"
         type: array
       juz:
-        $ref: '#/definitions/handler.JuzInfo'
+        $ref: "#/definitions/handler.JuzInfo"
     type: object
   handler.JuzInfo:
     properties:
@@ -107,7 +107,7 @@ definitions:
         type: string
       results:
         items:
-          $ref: '#/definitions/search.Result'
+          $ref: "#/definitions/search.Result"
         type: array
       total:
         type: integer
@@ -116,10 +116,10 @@ definitions:
     properties:
       ayahs:
         items:
-          $ref: '#/definitions/handler.AyahListItem'
+          $ref: "#/definitions/handler.AyahListItem"
         type: array
       surah:
-        $ref: '#/definitions/handler.SurahSummaryResponse'
+        $ref: "#/definitions/handler.SurahSummaryResponse"
     type: object
   handler.SurahSummaryResponse:
     properties:
@@ -201,7 +201,7 @@ definitions:
       surah_id:
         type: integer
       surah_info:
-        $ref: '#/definitions/search.SurahInfo'
+        $ref: "#/definitions/search.SurahInfo"
       text_uthmani:
         type: string
       translation:
@@ -258,11 +258,11 @@ info:
     ```json
     {
     "mcpServers": {
-    "quran": {
-    "type": "http",
-    "url": "https://quran.wahyuikbal.com/mcp"
-    }
-    }
+        "quran": {
+          "type": "http",
+          "url": "https://quran.wahyuikbal.com/mcp"
+        }
+      }
     }
     ```
 
@@ -297,583 +297,585 @@ paths:
     get:
       description: Get a specific ayah by its global ID (1-6236)
       parameters:
-      - description: Global ayah ID (1-6236)
-        in: path
-        maximum: 6236
-        minimum: 1
-        name: id
-        required: true
-        type: integer
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - description: Global ayah ID (1-6236)
+          in: path
+          maximum: 6236
+          minimum: 1
+          name: id
+          required: true
+          type: integer
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.AyahDetailResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.AyahDetailResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get ayah by global ID
       tags:
-      - Ayah
+        - Ayah
   /health:
     get:
       description: Check if the API is running
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/healthcheck.HealthCheck'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/healthcheck.HealthCheck"
+                type: object
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Health check
       tags:
-      - Health
+        - Health
   /health/ready:
     get:
       description: Check if the API is ready to serve requests (database connectivity)
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/healthcheck.HealthCheck'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/healthcheck.HealthCheck"
+                type: object
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Readiness check
       tags:
-      - Health
+        - Health
   /juz:
     get:
       description: Get a list of all 30 juz (parts) of the Quran
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/juz.Juz'
-                  type: array
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/definitions/juz.Juz"
+                    type: array
+                type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: List all juz
       tags:
-      - Juz
+        - Juz
   /juz/{number}:
     get:
       description: Get detailed information about a specific juz
       parameters:
-      - description: Juz number (1-30)
-        in: path
-        maximum: 30
-        minimum: 1
-        name: number
-        required: true
-        type: integer
+        - description: Juz number (1-30)
+          in: path
+          maximum: 30
+          minimum: 1
+          name: number
+          required: true
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/juz.Juz'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/juz.Juz"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get juz by number
       tags:
-      - Juz
+        - Juz
   /juz/{number}/ayah:
     get:
       description: Get all ayahs from a specific juz with pagination
       parameters:
-      - description: Juz number (1-30)
-        in: path
-        maximum: 30
-        minimum: 1
-        name: number
-        required: true
-        type: integer
-      - default: 1
-        description: Page number
-        in: query
-        minimum: 1
-        name: page
-        type: integer
-      - default: 50
-        description: Items per page
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - description: Juz number (1-30)
+          in: path
+          maximum: 30
+          minimum: 1
+          name: number
+          required: true
+          type: integer
+        - default: 1
+          description: Page number
+          in: query
+          minimum: 1
+          name: page
+          type: integer
+        - default: 50
+          description: Items per page
+          in: query
+          maximum: 100
+          minimum: 1
+          name: limit
+          type: integer
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.JuzAyahsResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.JuzAyahsResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get ayahs by juz
       tags:
-      - Juz
+        - Juz
   /juz/{number}/surah:
     get:
       description: Get all surahs that appear in a specific juz
       parameters:
-      - description: Juz number (1-30)
-        in: path
-        maximum: 30
-        minimum: 1
-        name: number
-        required: true
-        type: integer
+        - description: Juz number (1-30)
+          in: path
+          maximum: 30
+          minimum: 1
+          name: number
+          required: true
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/juz.JuzSurah'
-                  type: array
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/definitions/juz.JuzSurah"
+                    type: array
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get surahs by juz
       tags:
-      - Juz
+        - Juz
   /random:
     get:
       description: Get a random ayah, optionally filtered by surah
       parameters:
-      - default: 0
-        description: Filter by surah ID (0 = any)
-        in: query
-        minimum: 0
-        name: surah_id
-        type: integer
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - default: 0
+          description: Filter by surah ID (0 = any)
+          in: query
+          minimum: 0
+          name: surah_id
+          type: integer
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.AyahDetailResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.AyahDetailResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get random ayah
       tags:
-      - Ayah
+        - Ayah
   /sajda:
     get:
       description: Get all 15 sajda tilawah ayahs in the Quran
       parameters:
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.SajdaListItem'
-                  type: array
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/definitions/handler.SajdaListItem"
+                    type: array
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: List sajda ayahs
       tags:
-      - Ayah
+        - Ayah
   /search:
     get:
-      description: Full-text search across Quran ayahs (Arabic, Indonesian, English)
+      description:
+        Full-text search across Quran ayahs (Arabic, Indonesian, English)
         using FTS5
       parameters:
-      - description: Search query
-        in: query
-        name: q
-        required: true
-        type: string
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
-      - description: Filter by surah ID
-        in: query
-        maximum: 114
-        minimum: 1
-        name: surah_id
-        type: integer
-      - description: Filter by juz number
-        in: query
-        maximum: 30
-        minimum: 1
-        name: juz
-        type: integer
-      - default: 1
-        description: Page number
-        in: query
-        minimum: 1
-        name: page
-        type: integer
-      - default: 20
-        description: Items per page
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
+        - description: Search query
+          in: query
+          name: q
+          required: true
+          type: string
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
+        - description: Filter by surah ID
+          in: query
+          maximum: 114
+          minimum: 1
+          name: surah_id
+          type: integer
+        - description: Filter by juz number
+          in: query
+          maximum: 30
+          minimum: 1
+          name: juz
+          type: integer
+        - default: 1
+          description: Page number
+          in: query
+          minimum: 1
+          name: page
+          type: integer
+        - default: 20
+          description: Items per page
+          in: query
+          maximum: 100
+          minimum: 1
+          name: limit
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.SearchResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.SearchResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Search ayahs
       tags:
-      - Search
+        - Search
   /surah:
     get:
-      description: Get a list of all 114 surahs, optionally filtered by revelation
+      description:
+        Get a list of all 114 surahs, optionally filtered by revelation
         type
       parameters:
-      - description: Filter by revelation type
-        enum:
-        - meccan
-        - medinan
-        in: query
-        name: type
-        type: string
+        - description: Filter by revelation type
+          enum:
+            - meccan
+            - medinan
+          in: query
+          name: type
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/surah.Surah'
-                  type: array
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/definitions/surah.Surah"
+                    type: array
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: List all surahs
       tags:
-      - Surah
+        - Surah
   /surah/{id}:
     get:
       description: Get detailed information about a specific surah
       parameters:
-      - description: Surah ID (1-114)
-        in: path
-        maximum: 114
-        minimum: 1
-        name: id
-        required: true
-        type: integer
+        - description: Surah ID (1-114)
+          in: path
+          maximum: 114
+          minimum: 1
+          name: id
+          required: true
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/surah.Surah'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/surah.Surah"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get surah by ID
       tags:
-      - Surah
+        - Surah
   /surah/{id}/ayah:
     get:
       description: Get ayahs from a specific surah with optional range filtering
       parameters:
-      - description: Surah ID (1-114)
-        in: path
-        maximum: 114
-        minimum: 1
-        name: id
-        required: true
-        type: integer
-      - description: Start ayah number (must use with 'to')
-        in: query
-        name: from
-        type: integer
-      - description: End ayah number (must use with 'from')
-        in: query
-        name: to
-        type: integer
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - description: Surah ID (1-114)
+          in: path
+          maximum: 114
+          minimum: 1
+          name: id
+          required: true
+          type: integer
+        - description: Start ayah number (must use with 'to')
+          in: query
+          name: from
+          type: integer
+        - description: End ayah number (must use with 'from')
+          in: query
+          name: to
+          type: integer
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.SurahAyahsResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.SurahAyahsResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get ayahs by surah
       tags:
-      - Ayah
+        - Ayah
   /surah/{id}/ayah/{number}:
     get:
       description: Get a specific ayah by its surah ID and number within that surah
       parameters:
-      - description: Surah ID (1-114)
-        in: path
-        maximum: 114
-        minimum: 1
-        name: id
-        required: true
-        type: integer
-      - description: Ayah number within the surah
-        in: path
-        minimum: 1
-        name: number
-        required: true
-        type: integer
-      - default: id
-        description: Translation language
-        enum:
-        - id
-        - en
-        in: query
-        name: lang
-        type: string
+        - description: Surah ID (1-114)
+          in: path
+          maximum: 114
+          minimum: 1
+          name: id
+          required: true
+          type: integer
+        - description: Ayah number within the surah
+          in: path
+          minimum: 1
+          name: number
+          required: true
+          type: integer
+        - default: id
+          description: Translation language
+          enum:
+            - id
+            - en
+          in: query
+          name: lang
+          type: string
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.AyahDetailResponse'
-              type: object
+              - $ref: "#/definitions/response.SuccessResponse"
+              - properties:
+                  data:
+                    $ref: "#/definitions/handler.AyahDetailResponse"
+                type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: "#/definitions/response.ErrorResponse"
       summary: Get ayah by surah and number
       tags:
-      - Ayah
+        - Ayah
 schemes:
-- http
-- https
+  - http
+  - https
 swagger: "2.0"
