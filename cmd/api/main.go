@@ -76,8 +76,16 @@ func main() {
 	r.GET("/juz/:number/ayah", juzHandler.Ayahs)
 	r.GET("/search", searchHandler.Search)
 
-	// MCP endpoint (Streamable HTTP, stateless)
-	r.Any("/mcp", gin.WrapH(mcpHandler))
+	// MCP endpoint with per-route CORS so browser-based clients (MCP Inspector,
+	// Claude.ai web, etc.) work regardless of the global ALLOWED_ORIGINS value.
+	mcpOrigin := cfg.AllowedOrigins
+	if mcpOrigin == "" {
+		mcpOrigin = "*" // MCP is a public read-only endpoint
+	}
+	mcpCORS := middleware.CORS(mcpOrigin)
+	r.OPTIONS("/mcp", mcpCORS)
+	r.POST("/mcp", mcpCORS, gin.WrapH(mcpHandler))
+	r.GET("/mcp", mcpCORS, gin.WrapH(mcpHandler))
 
 	// Documentation
 	r.GET("/docs", docsHandler.ServeDocs)
