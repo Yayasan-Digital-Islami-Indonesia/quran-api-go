@@ -135,3 +135,23 @@ func newJuzAyahsResponse(ayahs []juz.JuzAyah, lang string) []JuzAyahListItem {
 	}
 	return result
 }
+
+func (h *JuzHandler) Surahs(c *gin.Context) {
+	number, err := strconv.Atoi(c.Param("number"))
+	if err != nil || number < 1 || number > 30 {
+		response.BadRequest(c, "invalid juz number")
+		return
+	}
+
+	surahs, err := h.service.GetSurahsByJuz(c.Request.Context(), number)
+	if err != nil {
+		response.InternalError(c)
+		return
+	}
+	if surahs == nil {
+		response.NotFound(c, "juz not found")
+		return
+	}
+
+	response.Success(c, surahs)
+}

@@ -8,4 +8,5 @@ type JuzService interface {
 	GetAll(ctx context.Context) ([]Juz, error)
 	GetByNumber(ctx context.Context, number int) (*Juz, error)
 	GetAyahsByJuz(ctx context.Context, juzNumber, limit, offset int) ([]JuzAyah, error)
+	GetSurahsByJuz(ctx context.Context, juzNumber int) ([]JuzSurah, error)
 }

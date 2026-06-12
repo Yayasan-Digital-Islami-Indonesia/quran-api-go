@@ -204,3 +204,40 @@ func (a *AyahRepository) FindRandom(ctx context.Context, surahID int) (*ayah.Aya
 
 	return &ay, nil
 }
+
+func (a *AyahRepository) FindSajda(ctx context.Context) ([]ayah.SajdaAyah, error) {
+	query := `
+		SELECT a.id, a.surah_id, s.name_latin, a.number_in_surah,
+		       a.text_uthmani, a.translation_indo, a.translation_en, a.juz_number, a.sajda_type
+		FROM ayahs a
+		INNER JOIN surahs s ON a.surah_id = s.id
+		WHERE a.sajda_type IS NOT NULL
+		ORDER BY a.id ASC
+	`
+
+	rows, err := a.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []ayah.SajdaAyah
+	for rows.Next() {
+		var sa ayah.SajdaAyah
+		if err := rows.Scan(
+			&sa.AyahID,
+			&sa.SurahID,
+			&sa.SurahNameLatin,
+			&sa.NumberInSurah,
+			&sa.TextUthmani,
+			&sa.TranslationIdo,
+			&sa.TranslationEn,
+			&sa.JuzNumber,
+			&sa.SajdaType,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, sa)
+	}
+	return result, rows.Err()
+}

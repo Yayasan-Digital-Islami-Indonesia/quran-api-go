@@ -9,4 +9,5 @@ type AyahService interface {
 	GetBySurah(ctx context.Context, surahID, from, to int) ([]Ayah, error)
 	GetBySurahAndNumber(ctx context.Context, surahID, number int) (*Ayah, error)
 	GetRandom(ctx context.Context, surahID int) (*Ayah, error)
+	GetSajda(ctx context.Context) ([]SajdaAyah, error)
 }

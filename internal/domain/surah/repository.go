@@ -7,4 +7,5 @@ import "context"
 type SurahRepository interface {
 	FindAll(ctx context.Context) ([]Surah, error)
 	FindByID(ctx context.Context, id int) (*Surah, error)
+	FindByRevelationType(ctx context.Context, revelationType string) ([]Surah, error)
 }

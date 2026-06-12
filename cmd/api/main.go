@@ -71,9 +71,11 @@ func main() {
 	r.GET("/surah/:id/ayah", ayahHandler.BySurah)
 	r.GET("/surah/:id/ayah/:number", ayahHandler.BySurahAndNumber)
 	r.GET("/random", ayahHandler.RandomAyah)
+	r.GET("/sajda", ayahHandler.Sajda)
 	r.GET("/juz", juzHandler.List)
 	r.GET("/juz/:number", juzHandler.Detail)
 	r.GET("/juz/:number/ayah", juzHandler.Ayahs)
+	r.GET("/juz/:number/surah", juzHandler.Surahs)
 	r.GET("/search", searchHandler.Search)
 
 	// MCP endpoint with per-route CORS so browser-based clients (MCP Inspector,

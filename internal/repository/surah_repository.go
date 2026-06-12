@@ -53,6 +53,27 @@ func (s *SurahRepository) FindAll(ctx context.Context) ([]surah.Surah, error) {
 	return surahs, nil
 }
 
+func (s *SurahRepository) FindByRevelationType(ctx context.Context, revelationType string) ([]surah.Surah, error) {
+	query := `SELECT id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type
+	          FROM surahs WHERE LOWER(revelation_type) = LOWER(?) ORDER BY id ASC`
+
+	rows, err := s.db.QueryContext(ctx, query, revelationType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var surahs []surah.Surah
+	for rows.Next() {
+		var s surah.Surah
+		if err := rows.Scan(&s.ID, &s.Number, &s.NameArabic, &s.NameLatin, &s.NameTransliteration, &s.NumberOfAyahs, &s.RevelationType); err != nil {
+			return nil, err
+		}
+		surahs = append(surahs, s)
+	}
+	return surahs, rows.Err()
+}
+
 func (s *SurahRepository) FindByID(ctx context.Context, id int) (*surah.Surah, error) {
 	query := `SELECT 
 	id, number, name_arabic, name_latin, name_transliteration, number_of_ayahs, revelation_type 

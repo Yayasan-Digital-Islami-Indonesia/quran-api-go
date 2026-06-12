@@ -294,3 +294,48 @@ func parseIDParam(raw string) (int, error) {
 
 	return strconv.Atoi(validated)
 }
+
+type SajdaListItem struct {
+	ID            int    `json:"id"`
+	SurahID       int    `json:"surah_id"`
+	SurahName     string `json:"surah_name"`
+	NumberInSurah int    `json:"number_in_surah"`
+	TextUthmani   string `json:"text_uthmani"`
+	Translation   string `json:"translation"`
+	Juz           int    `json:"juz"`
+	SajdaType     string `json:"sajda_type"`
+}
+
+func (h *AyahHandler) Sajda(c *gin.Context) {
+	lang, err := validator.ValidateLang(c.Query("lang"))
+	if err != nil {
+		response.BadRequest(c, "lang must be 'id' or 'en'")
+		return
+	}
+
+	ayahs, err := h.ayahService.GetSajda(c.Request.Context())
+	if err != nil {
+		response.InternalError(c)
+		return
+	}
+
+	result := make([]SajdaListItem, 0, len(ayahs))
+	for _, a := range ayahs {
+		translation := a.TranslationIdo
+		if lang == "en" {
+			translation = a.TranslationEn
+		}
+		result = append(result, SajdaListItem{
+			ID:            a.AyahID,
+			SurahID:       a.SurahID,
+			SurahName:     a.SurahNameLatin,
+			NumberInSurah: a.NumberInSurah,
+			TextUthmani:   a.TextUthmani,
+			Translation:   translation,
+			Juz:           a.JuzNumber,
+			SajdaType:     a.SajdaType,
+		})
+	}
+
+	response.Success(c, result)
+}

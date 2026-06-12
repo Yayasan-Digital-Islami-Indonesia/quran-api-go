@@ -7,4 +7,5 @@ import "context"
 type SurahService interface {
 	GetAll(ctx context.Context) ([]Surah, error)
 	GetByID(ctx context.Context, id int) (*Surah, error)
+	GetByRevelationType(ctx context.Context, revelationType string) ([]Surah, error)
 }

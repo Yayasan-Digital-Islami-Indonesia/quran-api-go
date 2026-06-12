@@ -112,3 +112,30 @@ func (r *juzRepository) FindAyahsByJuz(ctx context.Context, juzNumber, limit, of
 
 	return ayahs, nil
 }
+
+func (r *juzRepository) FindSurahsByJuz(ctx context.Context, juzNumber int) ([]juz.JuzSurah, error) {
+	query := `
+		SELECT DISTINCT s.id, s.number, s.name_arabic, s.name_latin, s.name_transliteration,
+		       s.number_of_ayahs, s.revelation_type
+		FROM ayahs a
+		INNER JOIN surahs s ON a.surah_id = s.id
+		WHERE a.juz_number = ?
+		ORDER BY s.id ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, juzNumber)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var surahs []juz.JuzSurah
+	for rows.Next() {
+		var s juz.JuzSurah
+		if err := rows.Scan(&s.ID, &s.Number, &s.NameArabic, &s.NameLatin, &s.NameTransliteration, &s.NumberOfAyahs, &s.RevelationType); err != nil {
+			return nil, err
+		}
+		surahs = append(surahs, s)
+	}
+	return surahs, rows.Err()
+}

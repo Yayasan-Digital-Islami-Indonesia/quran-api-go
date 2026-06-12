@@ -20,6 +20,21 @@ func NewSurahHandler(service surah.SurahService) *SurahHandler {
 }
 
 func (h *SurahHandler) List(c *gin.Context) {
+	revelationType := c.Query("type")
+	if revelationType != "" {
+		if revelationType != "meccan" && revelationType != "medinan" {
+			response.BadRequest(c, "type must be 'meccan' or 'medinan'")
+			return
+		}
+		surahs, err := h.service.GetByRevelationType(c.Request.Context(), revelationType)
+		if err != nil {
+			response.InternalError(c)
+			return
+		}
+		response.Success(c, surahs)
+		return
+	}
+
 	surahs, err := h.service.GetAll(c.Request.Context())
 	if err != nil {
 		response.InternalError(c)

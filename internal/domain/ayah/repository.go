@@ -9,4 +9,5 @@ type AyahRepository interface {
 	FindBySurah(ctx context.Context, surahID, from, to int) ([]Ayah, error)
 	FindBySurahAndNumber(ctx context.Context, surahID, number int) (*Ayah, error)
 	FindRandom(ctx context.Context, surahID int) (*Ayah, error) // surahID=0 means any surah
+	FindSajda(ctx context.Context) ([]SajdaAyah, error)
 }

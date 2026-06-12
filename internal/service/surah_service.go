@@ -21,3 +21,7 @@ func (s *surahService) GetAll(ctx context.Context) ([]surah.Surah, error) {
 func (s *surahService) GetByID(ctx context.Context, id int) (*surah.Surah, error) {
 	return s.repo.FindByID(ctx, id)
 }
+
+func (s *surahService) GetByRevelationType(ctx context.Context, revelationType string) ([]surah.Surah, error) {
+	return s.repo.FindByRevelationType(ctx, revelationType)
+}

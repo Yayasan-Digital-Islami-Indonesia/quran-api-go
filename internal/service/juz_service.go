@@ -40,3 +40,10 @@ func (s *juzService) GetAyahsByJuz(ctx context.Context, juzNumber, limit, offset
 
 	return s.repo.FindAyahsByJuz(ctx, juzNumber, limit, offset)
 }
+
+func (s *juzService) GetSurahsByJuz(ctx context.Context, juzNumber int) ([]juz.JuzSurah, error) {
+	if juzNumber < 1 || juzNumber > 30 {
+		return nil, nil
+	}
+	return s.repo.FindSurahsByJuz(ctx, juzNumber)
+}

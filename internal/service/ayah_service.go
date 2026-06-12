@@ -32,3 +32,7 @@ func (s *ayahService) GetBySurahAndNumber(ctx context.Context, surahID, number i
 func (s *ayahService) GetRandom(ctx context.Context, surahID int) (*ayah.Ayah, error) {
 	return s.repo.FindRandom(ctx, surahID)
 }
+
+func (s *ayahService) GetSajda(ctx context.Context) ([]ayah.SajdaAyah, error) {
+	return s.repo.FindSajda(ctx)
+}
