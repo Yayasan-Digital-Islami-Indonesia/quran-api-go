@@ -82,8 +82,15 @@ paths:
       tags:
         - Surah
       summary: List all surahs
-      description: Get a list of all 114 surahs
+      description: Get a list of all 114 surahs, optionally filtered by revelation type
       operationId: listSurahs
+      parameters:
+        - name: type
+          in: query
+          description: Filter by revelation type
+          schema:
+            type: string
+            enum: [meccan, medinan]
       responses:
         '200':
           description: List of surahs
@@ -332,6 +339,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /sajda:
+    get:
+      tags:
+        - Ayah
+      summary: List sajda ayahs
+      description: Get all 15 sajda tilawah ayahs in the Quran
+      operationId: listSajdaAyahs
+      parameters:
+        - name: lang
+          in: query
+          description: Translation language
+          schema:
+            type: string
+            enum: [id, en]
+            default: id
+      responses:
+        '200':
+          description: List of sajda ayahs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SajdaAyahItem'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /random:
     get:
       tags:
@@ -512,6 +555,55 @@ paths:
                         $ref: '#/components/schemas/JuzAyahsResponse'
         '400':
           description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Juz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /juz/{number}/surah:
+    get:
+      tags:
+        - Juz
+      summary: Get surahs by juz
+      description: Get all surahs that appear in a specific juz
+      operationId: getSurahsByJuz
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Juz number (1-30)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+      responses:
+        '200':
+          description: List of surahs in the juz
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Surah'
+        '400':
+          description: Invalid juz number
           content:
             application/json:
               schema:
@@ -886,6 +978,44 @@ components:
               juz_number:
                 type: integer
                 example: 1
+
+    SajdaAyahItem:
+      type: object
+      required:
+        - id
+        - surah_id
+        - surah_name
+        - number_in_surah
+        - text_uthmani
+        - translation
+        - juz
+        - sajda_type
+      properties:
+        id:
+          type: integer
+          example: 206
+        surah_id:
+          type: integer
+          example: 7
+        surah_name:
+          type: string
+          example: Al-A'raf
+        number_in_surah:
+          type: integer
+          example: 206
+        text_uthmani:
+          type: string
+          example: إِنَّ ٱلَّذِينَ عِندَ رَبِّكَ
+        translation:
+          type: string
+          example: Sesungguhnya mereka yang ada di sisi Tuhanmu
+        juz:
+          type: integer
+          example: 9
+        sajda_type:
+          type: string
+          description: Type of sajda (obligatory or recommended)
+          example: obligatory
 
     SearchResponse:
       type: object

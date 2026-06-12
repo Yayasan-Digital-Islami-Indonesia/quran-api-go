@@ -17,8 +17,69 @@ import (
 	"quran-api-go/internal/middleware"
 	"quran-api-go/internal/repository"
 	"quran-api-go/internal/service"
+	_ "quran-api-go/docs"
 )
 
+// @title           Quran API Go
+// @version         1.0.0
+// @description     Internal RESTful API serving Al-Quran data (Arabic text, Indonesian & English translations) for the Ilmunara super app.
+// @description
+// @description     ---
+// @description
+// @description     ## MCP Server
+// @description
+// @description     API ini dilengkapi dengan **MCP (Model Context Protocol) server** sehingga bisa digunakan langsung dari AI assistant seperti Claude, Cursor, dan tools lainnya.
+// @description
+// @description     ### Koneksi
+// @description
+// @description     | | |
+// @description     |---|---|
+// @description     | **URL** | `https://quran.wahyuikbal.com/mcp` |
+// @description     | **Transport** | Streamable HTTP |
+// @description     | **Mode** | Stateless (tidak perlu session) |
+// @description
+// @description     ### Setup Claude Desktop
+// @description
+// @description     Tambahkan ke file `claude_desktop_config.json`:
+// @description
+// @description     ```json
+// @description     {
+// @description       "mcpServers": {
+// @description         "quran": {
+// @description           "type": "http",
+// @description           "url": "https://quran.wahyuikbal.com/mcp"
+// @description         }
+// @description       }
+// @description     }
+// @description     ```
+// @description
+// @description     ### Tools yang Tersedia
+// @description
+// @description     | Tool | Deskripsi |
+// @description     |---|---|
+// @description     | `list_surahs` | Daftar semua 114 surah |
+// @description     | `get_surah` | Detail surah berdasarkan ID |
+// @description     | `get_ayahs_by_surah` | Ayat-ayat dalam surah tertentu |
+// @description     | `get_ayah` | Ayat berdasarkan ID global |
+// @description     | `get_ayah_by_ref` | Ayat berdasarkan nomor surah dan ayat |
+// @description     | `random_ayah` | Ayat acak |
+// @description     | `list_juz` | Daftar semua 30 juz |
+// @description     | `get_juz` | Detail juz tertentu |
+// @description     | `get_ayahs_by_juz` | Ayat-ayat dalam juz tertentu |
+// @description     | `search_quran` | Pencarian full-text (Arab, Indonesia, Inggris) |
+// @description
+// @description     ### Contoh Penggunaan
+// @description
+// @description     Setelah terhubung, kamu bisa langsung tanya ke AI:
+// @description
+// @description     > *"Tampilkan ayat pertama surah Al-Baqarah beserta terjemahannya"*
+// @description
+// @description     > *"Cari ayat yang mengandung kata 'sabar' dalam terjemahan Indonesia"*
+// @description
+// @description     > *"Surah apa saja yang ada di Juz 30?"*
+// @host            localhost:8080
+// @BasePath        /
+// @schemes         http https
 func main() {
 	cfg := config.Load()
 	setupLogger(cfg.LogLevel)

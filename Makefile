@@ -1,4 +1,4 @@
-.PHONY: run mcp test lint migrate seed
+.PHONY: run mcp test lint migrate seed swag
 
 run:
 	go run ./cmd/api
@@ -18,3 +18,6 @@ migrate:
 
 seed:
 	go run ./cmd/seed --data ./data/seed
+
+swag:
+	swag init -g cmd/api/main.go -o docs --outputTypes go,yaml

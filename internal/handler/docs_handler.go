@@ -46,8 +46,8 @@ func (h *DocsHandler) ServeOpenAPI(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Cache-Control", "no-store")
 
-	// Read the static openapi.yaml
-	content, err := os.ReadFile("./docs/openapi.yaml")
+	// Read the swaggo-generated spec
+	content, err := os.ReadFile("./docs/swagger.yaml")
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return

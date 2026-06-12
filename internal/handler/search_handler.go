@@ -26,6 +26,21 @@ func NewSearchHandler(service search.SearchService) *SearchHandler {
 	return &SearchHandler{service: service}
 }
 
+// Search godoc
+// @Summary     Search ayahs
+// @Description Full-text search across Quran ayahs (Arabic, Indonesian, English) using FTS5
+// @Tags        Search
+// @Produce     json
+// @Param       q         query    string  true   "Search query"
+// @Param       lang      query    string  false  "Translation language"  Enums(id, en)  default(id)
+// @Param       surah_id  query    int     false  "Filter by surah ID"  minimum(1)  maximum(114)
+// @Param       juz       query    int     false  "Filter by juz number"  minimum(1)  maximum(30)
+// @Param       page      query    int     false  "Page number"  minimum(1)  default(1)
+// @Param       limit     query    int     false  "Items per page"  minimum(1)  maximum(100)  default(20)
+// @Success     200       {object} response.SuccessResponse{data=SearchResponse}
+// @Failure     400       {object} response.ErrorResponse
+// @Failure     500       {object} response.ErrorResponse
+// @Router      /search [get]
 func (h *SearchHandler) Search(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {

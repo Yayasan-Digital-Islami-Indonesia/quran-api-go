@@ -19,6 +19,16 @@ func NewSurahHandler(service surah.SurahService) *SurahHandler {
 	return &SurahHandler{service: service}
 }
 
+// List godoc
+// @Summary     List all surahs
+// @Description Get a list of all 114 surahs, optionally filtered by revelation type
+// @Tags        Surah
+// @Produce     json
+// @Param       type  query    string  false  "Filter by revelation type"  Enums(meccan, medinan)
+// @Success     200   {object} response.SuccessResponse{data=[]surah.Surah}
+// @Failure     400   {object} response.ErrorResponse
+// @Failure     500   {object} response.ErrorResponse
+// @Router      /surah [get]
 func (h *SurahHandler) List(c *gin.Context) {
 	revelationType := c.Query("type")
 	if revelationType != "" {
@@ -44,6 +54,17 @@ func (h *SurahHandler) List(c *gin.Context) {
 	response.Success(c, surahs)
 }
 
+// Detail godoc
+// @Summary     Get surah by ID
+// @Description Get detailed information about a specific surah
+// @Tags        Surah
+// @Produce     json
+// @Param       id   path     int  true  "Surah ID (1-114)"  minimum(1)  maximum(114)
+// @Success     200  {object} response.SuccessResponse{data=surah.Surah}
+// @Failure     400  {object} response.ErrorResponse
+// @Failure     404  {object} response.ErrorResponse
+// @Failure     500  {object} response.ErrorResponse
+// @Router      /surah/{id} [get]
 func (h *SurahHandler) Detail(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
