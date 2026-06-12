@@ -21,3 +21,5 @@ seed:
 
 swag:
 	swag init -g cmd/api/main.go -o docs --outputTypes go,yaml
+	mkdir -p docs/api-reference
+	cp docs/swagger.yaml docs/api-reference/openapi.yaml

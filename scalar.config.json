@@ -1,0 +1,178 @@
+{
+  "$schema": "https://registry.scalar.com/@scalar/schemas/config",
+  "scalar": "2.0.0",
+  "info": {
+    "title": "Scalar Starter Kit",
+    "description": "Get Started with the Scalar Docs"
+  },
+  "siteConfig": {
+    "logo": {
+      "darkMode": "https://cdn.scalar.com/marketing/landing/logo-dark.svg",
+      "lightMode": "https://cdn.scalar.com/marketing/landing/logo-light.svg"
+    }
+  },
+  "navigation": {
+    "header": [
+      { "type": "spacer" },
+      {
+        "type": "link",
+        "title": "Log in",
+        "to": "https://dashboard.scalar.com/login"
+      },
+      {
+        "type": "link",
+        "title": "Register",
+        "style": "button",
+        "to": "https://dashboard.scalar.com/register"
+      }
+    ],
+    "routes": {
+      "/": {
+        "type": "group",
+        "title": "Scalar Starter Kit",
+        "children": {
+          "/": {
+            "type": "page",
+            "filepath": "docs/content/quickstart.mdx",
+            "title": "Quickstart",
+            "icon": "phosphor/regular/fast-forward"
+          },
+          "/api-references": {
+            "type": "page",
+            "filepath": "docs/content/api-references.mdx",
+            "title": "API References",
+            "icon": "phosphor/regular/notebook"
+          },
+          "/documentation": {
+            "type": "link",
+            "title": "Documentation",
+            "url": "https://scalar.com/products/docs/getting-started",
+            "icon": "phosphor/regular/book-open"
+          },
+          "/github": {
+            "type": "link",
+            "title": "GitHub",
+            "url": "https://github.com/scalar/starter",
+            "icon": "phosphor/regular/github-logo"
+          },
+          "/components": {
+            "type": "group",
+            "title": "Components",
+            "mode": "flat",
+            "children": {
+              "/callout": {
+                "type": "page",
+                "filepath": "docs/content/components/callout.mdx",
+                "title": "Callout",
+                "icon": "phosphor/regular/megaphone"
+              },
+              "/button": {
+                "type": "page",
+                "filepath": "docs/content/components/button.mdx",
+                "title": "Button",
+                "icon": "phosphor/regular/cursor-click"
+              },
+              "/embed": {
+                "type": "page",
+                "filepath": "docs/content/components/embed.mdx",
+                "title": "Embed",
+                "icon": "phosphor/regular/video"
+              },
+              "/image": {
+                "type": "page",
+                "filepath": "docs/content/components/image.mdx",
+                "title": "Image",
+                "icon": "phosphor/regular/image"
+              },
+              "/fineprint": {
+                "type": "page",
+                "filepath": "docs/content/components/fineprint.mdx",
+                "title": "Fineprint",
+                "icon": "phosphor/regular/text-aa"
+              },
+              "/math": {
+                "type": "page",
+                "filepath": "docs/content/components/math.mdx",
+                "title": "Math",
+                "icon": "phosphor/regular/function"
+              },
+              "/page-link": {
+                "type": "page",
+                "filepath": "docs/content/components/page-link.mdx",
+                "title": "PageLink",
+                "icon": "phosphor/regular/link"
+              },
+              "/tabs": {
+                "type": "page",
+                "filepath": "docs/content/components/tabs.mdx",
+                "title": "Tabs",
+                "icon": "phosphor/regular/squares-four"
+              }
+            }
+          },
+          "/layouts": {
+            "type": "group",
+            "title": "Layouts",
+            "mode": "flat",
+            "children": {
+              "/no-toc": {
+                "type": "page",
+                "filepath": "docs/content/layouts/no-toc.mdx",
+                "title": "No TOC",
+                "icon": "phosphor/regular/list-dashes",
+                "layout": { "toc": false }
+              },
+              "/no-sidebar": {
+                "type": "page",
+                "filepath": "docs/content/layouts/no-sidebar.mdx",
+                "title": "No Sidebar",
+                "icon": "phosphor/regular/sidebar-simple",
+                "layout": { "sidebar": false }
+              },
+              "/search-in-header": {
+                "type": "page",
+                "filepath": "docs/content/layouts/search-in-header.mdx",
+                "title": "Search in Header",
+                "icon": "phosphor/regular/magnifying-glass",
+                "layout": {
+                  "header": true,
+                  "search": {
+                    "position": "header"
+                  }
+                }
+              },
+              "/minimal": {
+                "type": "page",
+                "filepath": "docs/content/layouts/minimal.mdx",
+                "title": "Minimal",
+                "icon": "phosphor/regular/square",
+                "layout": {
+                  "toc": false,
+                  "header": false,
+                  "sidebar": false,
+                  "tabs": false,
+                  "pageTitle": false,
+                  "pageActions": false,
+                  "search": { "enabled": false }
+                }
+              }
+            }
+          },
+          "/examples": {
+            "type": "group",
+            "title": "Examples",
+            "mode": "flat",
+            "children": {
+              "/api": {
+                "type": "openapi",
+                "filepath": "docs/api-reference/openapi.yaml",
+                "title": "Example API",
+                "icon": "phosphor/regular/plug"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

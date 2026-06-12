@@ -47,7 +47,7 @@ func (h *DocsHandler) ServeOpenAPI(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
 
 	// Read the swaggo-generated spec
-	content, err := os.ReadFile("./docs/swagger.yaml")
+	content, err := os.ReadFile("./docs/api-reference/openapi.yaml")
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
