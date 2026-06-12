@@ -2,15 +2,18 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"quran-api-go/internal/config"
 	"quran-api-go/internal/database"
 	"quran-api-go/internal/handler"
+	"quran-api-go/internal/mcpserver"
 	"quran-api-go/internal/middleware"
 	"quran-api-go/internal/repository"
 	"quran-api-go/internal/service"
@@ -54,6 +57,12 @@ func main() {
 	searchHandler := handler.NewSearchHandler(searchService)
 	docsHandler := handler.NewDocsHandler()
 
+	mcpSrv := mcpserver.New(cfg.AppVersion, surahService, ayahService, juzService, searchService)
+	mcpHandler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
+		return mcpSrv
+	}, &mcp.StreamableHTTPOptions{Stateless: true})
+
+	r.GET("/", func(c *gin.Context) { c.Redirect(301, "/docs") })
 	r.GET("/health", healthCheckHandler.HealthCheck)
 	r.GET("/health/ready", healthCheckHandler.ReadyCheck)
 	r.GET("/surah", surahHandler.List)
@@ -66,6 +75,9 @@ func main() {
 	r.GET("/juz/:number", juzHandler.Detail)
 	r.GET("/juz/:number/ayah", juzHandler.Ayahs)
 	r.GET("/search", searchHandler.Search)
+
+	// MCP endpoint (Streamable HTTP, stateless)
+	r.Any("/mcp", gin.WrapH(mcpHandler))
 
 	// Documentation
 	r.GET("/docs", docsHandler.ServeDocs)

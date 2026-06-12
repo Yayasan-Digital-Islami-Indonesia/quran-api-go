@@ -1,7 +1,10 @@
-.PHONY: run test lint migrate seed
+.PHONY: run mcp test lint migrate seed
 
 run:
 	go run ./cmd/api
+
+mcp:
+	go run ./cmd/mcp
 
 test:
 	go test ./...
