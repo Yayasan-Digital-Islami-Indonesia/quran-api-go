@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/rs/zerolog"
@@ -25,6 +26,14 @@ func main() {
 	zerolog.SetGlobalLevel(lvl)
 	// Logs must go to stderr — stdout is reserved for the MCP stdio transport.
 	log.Logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
+
+	// When DB_PATH is not set, resolve relative to the binary itself so the
+	// server works regardless of what working directory the MCP client uses.
+	if os.Getenv("DB_PATH") == "" {
+		if exe, err := os.Executable(); err == nil {
+			cfg.DBPath = filepath.Join(filepath.Dir(exe), "data", "quran.db")
+		}
+	}
 
 	db, err := database.New(cfg.DBPath)
 	if err != nil {

@@ -137,7 +137,31 @@ type searchInput struct {
 	Limit   int    `json:"limit"    jsonschema:"Items per page (default 20, max 100)"`
 }
 
-// ─── Output types ─────────────────────────────────────────────────────────────
+// ─── Output types (must all be structs — SDK requires JSON schema type "object") ──
+
+type listSurahsOutput struct {
+	Surahs []surah.Surah `json:"surahs"`
+}
+
+type getSurahOutput struct {
+	surah.Surah
+}
+
+type ayahsOutput struct {
+	Ayahs []ayah.Ayah `json:"ayahs"`
+}
+
+type ayahOutput struct {
+	ayah.Ayah
+}
+
+type listJuzOutput struct {
+	Juz []juz.Juz `json:"juz"`
+}
+
+type getJuzOutput struct {
+	juz.Juz
+}
 
 type juzAyahsOutput struct {
 	JuzNumber  int           `json:"juz_number"`
@@ -154,101 +178,101 @@ type searchOutput struct {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
-func (s *server) listSurahs(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, []surah.Surah, error) {
+func (s *server) listSurahs(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, listSurahsOutput, error) {
 	surahs, err := s.surahSvc.GetAll(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, listSurahsOutput{}, err
 	}
-	return nil, surahs, nil
+	return nil, listSurahsOutput{Surahs: surahs}, nil
 }
 
-func (s *server) getSurah(ctx context.Context, _ *mcp.CallToolRequest, in getSurahInput) (*mcp.CallToolResult, *surah.Surah, error) {
+func (s *server) getSurah(ctx context.Context, _ *mcp.CallToolRequest, in getSurahInput) (*mcp.CallToolResult, getSurahOutput, error) {
 	if in.ID < 1 || in.ID > 114 {
-		return nil, nil, fmt.Errorf("surah id must be between 1 and 114, got %d", in.ID)
+		return nil, getSurahOutput{}, fmt.Errorf("surah id must be between 1 and 114, got %d", in.ID)
 	}
 	result, err := s.surahSvc.GetByID(ctx, in.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil, fmt.Errorf("surah %d not found", in.ID)
+			return nil, getSurahOutput{}, fmt.Errorf("surah %d not found", in.ID)
 		}
-		return nil, nil, err
+		return nil, getSurahOutput{}, err
 	}
-	return nil, result, nil
+	return nil, getSurahOutput{*result}, nil
 }
 
-func (s *server) getAyahsBySurah(ctx context.Context, _ *mcp.CallToolRequest, in getAyahsBySurahInput) (*mcp.CallToolResult, []ayah.Ayah, error) {
+func (s *server) getAyahsBySurah(ctx context.Context, _ *mcp.CallToolRequest, in getAyahsBySurahInput) (*mcp.CallToolResult, ayahsOutput, error) {
 	if in.SurahID < 1 || in.SurahID > 114 {
-		return nil, nil, fmt.Errorf("surah_id must be between 1 and 114, got %d", in.SurahID)
+		return nil, ayahsOutput{}, fmt.Errorf("surah_id must be between 1 and 114, got %d", in.SurahID)
 	}
 	ayahs, err := s.ayahSvc.GetBySurah(ctx, in.SurahID, in.From, in.To)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil, fmt.Errorf("surah %d not found", in.SurahID)
+			return nil, ayahsOutput{}, fmt.Errorf("surah %d not found", in.SurahID)
 		}
-		return nil, nil, err
+		return nil, ayahsOutput{}, err
 	}
-	return nil, ayahs, nil
+	return nil, ayahsOutput{Ayahs: ayahs}, nil
 }
 
-func (s *server) getAyah(ctx context.Context, _ *mcp.CallToolRequest, in getAyahInput) (*mcp.CallToolResult, *ayah.Ayah, error) {
+func (s *server) getAyah(ctx context.Context, _ *mcp.CallToolRequest, in getAyahInput) (*mcp.CallToolResult, ayahOutput, error) {
 	if in.ID < 1 || in.ID > 6236 {
-		return nil, nil, fmt.Errorf("global ayah id must be between 1 and 6236, got %d", in.ID)
+		return nil, ayahOutput{}, fmt.Errorf("global ayah id must be between 1 and 6236, got %d", in.ID)
 	}
 	result, err := s.ayahSvc.GetByID(ctx, in.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil, fmt.Errorf("ayah with id %d not found", in.ID)
+			return nil, ayahOutput{}, fmt.Errorf("ayah with id %d not found", in.ID)
 		}
-		return nil, nil, err
+		return nil, ayahOutput{}, err
 	}
-	return nil, result, nil
+	return nil, ayahOutput{*result}, nil
 }
 
-func (s *server) getAyahByRef(ctx context.Context, _ *mcp.CallToolRequest, in getAyahByRefInput) (*mcp.CallToolResult, *ayah.Ayah, error) {
+func (s *server) getAyahByRef(ctx context.Context, _ *mcp.CallToolRequest, in getAyahByRefInput) (*mcp.CallToolResult, ayahOutput, error) {
 	if in.SurahID < 1 || in.SurahID > 114 {
-		return nil, nil, fmt.Errorf("surah_id must be between 1 and 114, got %d", in.SurahID)
+		return nil, ayahOutput{}, fmt.Errorf("surah_id must be between 1 and 114, got %d", in.SurahID)
 	}
 	if in.Number < 1 {
-		return nil, nil, fmt.Errorf("number must be >= 1, got %d", in.Number)
+		return nil, ayahOutput{}, fmt.Errorf("number must be >= 1, got %d", in.Number)
 	}
 	result, err := s.ayahSvc.GetBySurahAndNumber(ctx, in.SurahID, in.Number)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil, fmt.Errorf("ayah %d:%d not found", in.SurahID, in.Number)
+			return nil, ayahOutput{}, fmt.Errorf("ayah %d:%d not found", in.SurahID, in.Number)
 		}
-		return nil, nil, err
+		return nil, ayahOutput{}, err
 	}
-	return nil, result, nil
+	return nil, ayahOutput{*result}, nil
 }
 
-func (s *server) randomAyah(ctx context.Context, _ *mcp.CallToolRequest, in randomAyahInput) (*mcp.CallToolResult, *ayah.Ayah, error) {
+func (s *server) randomAyah(ctx context.Context, _ *mcp.CallToolRequest, in randomAyahInput) (*mcp.CallToolResult, ayahOutput, error) {
 	result, err := s.ayahSvc.GetRandom(ctx, in.SurahID)
 	if err != nil {
-		return nil, nil, err
+		return nil, ayahOutput{}, err
 	}
-	return nil, result, nil
+	return nil, ayahOutput{*result}, nil
 }
 
-func (s *server) listJuz(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, []juz.Juz, error) {
+func (s *server) listJuz(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, listJuzOutput, error) {
 	juzs, err := s.juzSvc.GetAll(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, listJuzOutput{}, err
 	}
-	return nil, juzs, nil
+	return nil, listJuzOutput{Juz: juzs}, nil
 }
 
-func (s *server) getJuz(ctx context.Context, _ *mcp.CallToolRequest, in getJuzInput) (*mcp.CallToolResult, *juz.Juz, error) {
+func (s *server) getJuz(ctx context.Context, _ *mcp.CallToolRequest, in getJuzInput) (*mcp.CallToolResult, getJuzOutput, error) {
 	if in.Number < 1 || in.Number > 30 {
-		return nil, nil, fmt.Errorf("juz number must be between 1 and 30, got %d", in.Number)
+		return nil, getJuzOutput{}, fmt.Errorf("juz number must be between 1 and 30, got %d", in.Number)
 	}
 	result, err := s.juzSvc.GetByNumber(ctx, in.Number)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil, fmt.Errorf("juz %d not found", in.Number)
+			return nil, getJuzOutput{}, fmt.Errorf("juz %d not found", in.Number)
 		}
-		return nil, nil, err
+		return nil, getJuzOutput{}, err
 	}
-	return nil, result, nil
+	return nil, getJuzOutput{*result}, nil
 }
 
 func (s *server) getAyahsByJuz(ctx context.Context, _ *mcp.CallToolRequest, in getAyahsByJuzInput) (*mcp.CallToolResult, juzAyahsOutput, error) {

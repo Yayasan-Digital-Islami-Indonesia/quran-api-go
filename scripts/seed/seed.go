@@ -290,8 +290,8 @@ func seedAyahs(ctx context.Context, tx *sql.Tx, ayahs []FlatAyah) error {
 	defer stmt.Close()
 
 	ftsStmt, err := tx.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO ayahs_fts (rowid, ayah_id, text_uthmani, translation_indo, translation_en)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT OR REPLACE INTO ayahs_fts (rowid, text_uthmani, translation_indo, translation_en)
+		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
@@ -306,7 +306,7 @@ func seedAyahs(ctx context.Context, tx *sql.Tx, ayahs []FlatAyah) error {
 		if _, err := stmt.ExecContext(ctx, a.ID, a.SurahID, a.NumberInSurah, a.TextUthmani, a.TranslationID, a.TranslationEN, a.JuzNumber, sajda, a.RevelationType); err != nil {
 			return err
 		}
-		if _, err := ftsStmt.ExecContext(ctx, a.ID, a.ID, a.TextUthmani, a.TranslationID, a.TranslationEN); err != nil {
+		if _, err := ftsStmt.ExecContext(ctx, a.ID, a.TextUthmani, a.TranslationID, a.TranslationEN); err != nil {
 			return err
 		}
 	}

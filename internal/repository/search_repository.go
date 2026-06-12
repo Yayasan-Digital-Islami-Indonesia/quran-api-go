@@ -17,35 +17,37 @@ func NewSearchRepository(db *sql.DB) search.SearchRepository {
 }
 
 func (r *searchRepository) Search(ctx context.Context, p search.Params) ([]search.Result, int, error) {
-	// Build FTS5 MATCH query with optional filters
-	whereClause := "ayahs_fts MATCH ?"
-	args := []interface{}{p.Query + "*"} // prefix match for partial terms
+	// Use a subquery so FTS5 only returns rowids from its index — avoids the
+	// content-table read that would fail on the missing `ayah_id` column.
+	ftsSubquery := "a.id IN (SELECT rowid FROM ayahs_fts WHERE ayahs_fts MATCH ?)"
+	ftsArgs := []interface{}{p.Query + "*"} // prefix match for partial terms
 
-	// Add optional filters
+	// Build optional outer filters on the ayahs table directly
+	outerFilters := ""
+	outerArgs := []interface{}{}
 	if p.SurahID > 0 {
-		whereClause += " AND a.surah_id = ?"
-		args = append(args, p.SurahID)
+		outerFilters += " AND a.surah_id = ?"
+		outerArgs = append(outerArgs, p.SurahID)
 	}
 	if p.Juz > 0 {
-		whereClause += " AND a.juz_number = ?"
-		args = append(args, p.Juz)
+		outerFilters += " AND a.juz_number = ?"
+		outerArgs = append(outerArgs, p.Juz)
 	}
+
+	whereClause := ftsSubquery + outerFilters
+	baseArgs := append(ftsArgs, outerArgs...)
 
 	// Count total results
 	countQuery := fmt.Sprintf(`
-		SELECT COUNT(DISTINCT ayahs_fts.ayah_id)
-		FROM ayahs_fts
-		JOIN ayahs a ON a.id = ayahs_fts.ayah_id
-		WHERE %s
+		SELECT COUNT(*) FROM ayahs a WHERE %s
 	`, whereClause)
 
 	var total int
-	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
+	err := r.db.QueryRowContext(ctx, countQuery, baseArgs...).Scan(&total)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, 0, err
 	}
 
-	// Fetch paginated results with surah info
 	limit := p.Limit
 	if limit < 1 {
 		limit = 20
@@ -53,7 +55,6 @@ func (r *searchRepository) Search(ctx context.Context, p search.Params) ([]searc
 	if limit > 100 {
 		limit = 100
 	}
-
 	offset := (p.Page - 1) * p.Limit
 	if offset < 0 {
 		offset = 0
@@ -62,18 +63,16 @@ func (r *searchRepository) Search(ctx context.Context, p search.Params) ([]searc
 	dataQuery := fmt.Sprintf(`
 		SELECT a.id, a.surah_id, s.name_latin, a.number_in_surah,
 			   a.text_uthmani, a.translation_indo, a.translation_en, a.juz_number
-		FROM ayahs_fts
-		JOIN ayahs a ON a.id = ayahs_fts.ayah_id
+		FROM ayahs a
 		JOIN surahs s ON a.surah_id = s.id
 		WHERE %s
-		GROUP BY a.id
 		ORDER BY a.id ASC
 		LIMIT ? OFFSET ?
 	`, whereClause)
 
-	args = append(args, limit, offset)
+	dataArgs := append(baseArgs, limit, offset)
 
-	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
+	rows, err := r.db.QueryContext(ctx, dataQuery, dataArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
