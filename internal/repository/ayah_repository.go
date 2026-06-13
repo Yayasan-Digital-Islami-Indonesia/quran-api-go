@@ -55,20 +55,25 @@ func (a *AyahRepository) FindByID(ctx context.Context, id int) (*ayah.Ayah, erro
 }
 
 func (a *AyahRepository) FindBySurah(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error) {
-	query := `SELECT 
-	id, 
-	surah_id, 
-	number_in_surah, 
-	text_uthmani,
-	translation_indo, 
-	translation_en,
-	juz_number,
-	sajda_type,
-	revelation_type
-	FROM ayahs WHERE surah_id = ? AND number_in_surah BETWEEN ? AND ?
-	ORDER BY number_in_surah ASC`
+	var (
+		query string
+		args  []interface{}
+	)
+	if from <= 0 || to <= 0 {
+		query = `SELECT id, surah_id, number_in_surah, text_uthmani,
+			translation_indo, translation_en, juz_number, sajda_type, revelation_type
+			FROM ayahs WHERE surah_id = ?
+			ORDER BY number_in_surah ASC`
+		args = []interface{}{surahID}
+	} else {
+		query = `SELECT id, surah_id, number_in_surah, text_uthmani,
+			translation_indo, translation_en, juz_number, sajda_type, revelation_type
+			FROM ayahs WHERE surah_id = ? AND number_in_surah BETWEEN ? AND ?
+			ORDER BY number_in_surah ASC`
+		args = []interface{}{surahID, from, to}
+	}
 
-	rows, err := a.db.QueryContext(ctx, query, surahID, from, to)
+	rows, err := a.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
