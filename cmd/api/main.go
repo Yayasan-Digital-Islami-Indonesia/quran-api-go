@@ -34,7 +34,7 @@ import (
 // @description
 // @description     | | |
 // @description     |---|---|
-// @description     | **URL** | `https://quran.wahyuikbal.com/mcp` |
+// @description     | **URL** | `https://quran.api.digitalislami.id/mcp` |
 // @description     | **Transport** | Streamable HTTP |
 // @description     | **Mode** | Stateless (tidak perlu session) |
 // @description
@@ -47,7 +47,7 @@ import (
 // @description       "mcpServers": {
 // @description         "quran": {
 // @description           "type": "http",
-// @description           "url": "https://quran.wahyuikbal.com/mcp"
+// @description           "url": "https://quran.api.digitalislami.id/mcp"
 // @description         }
 // @description       }
 // @description     }

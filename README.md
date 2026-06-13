@@ -79,7 +79,7 @@ API ini dilengkapi **MCP (Model Context Protocol) server** sehingga bisa digunak
 
 | | |
 |---|---|
-| URL | `https://quran.wahyuikbal.com/mcp` |
+| URL | `https://quran.api.digitalislami.id/mcp` |
 | Transport | Streamable HTTP |
 
 **Setup Claude Desktop** — tambahkan ke `claude_desktop_config.json`:
@@ -88,7 +88,7 @@ API ini dilengkapi **MCP (Model Context Protocol) server** sehingga bisa digunak
   "mcpServers": {
     "quran": {
       "type": "http",
-      "url": "https://quran.wahyuikbal.com/mcp"
+      "url": "https://quran.api.digitalislami.id/mcp"
     }
   }
 }

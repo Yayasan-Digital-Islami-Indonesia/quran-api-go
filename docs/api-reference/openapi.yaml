@@ -247,7 +247,7 @@ info:
 
     | | |
     |---|---|
-    | **URL** | `https://quran.wahyuikbal.com/mcp` |
+    | **URL** | `https://quran.api.digitalislami.id/mcp` |
     | **Transport** | Streamable HTTP |
     | **Mode** | Stateless (tidak perlu session) |
 
@@ -260,7 +260,7 @@ info:
     "mcpServers": {
         "quran": {
           "type": "http",
-          "url": "https://quran.wahyuikbal.com/mcp"
+          "url": "https://quran.api.digitalislami.id/mcp"
         }
       }
     }
