@@ -2,6 +2,7 @@ package handler
 
 import (
 	"embed"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,6 +13,8 @@ import (
 
 //go:embed static/*
 var staticFiles embed.FS
+
+const canonicalProductionBaseURL = "https://quran.api.digitalislami.id"
 
 const scalarHTML = `<!doctype html>
 <html>
@@ -53,20 +56,7 @@ func (h *DocsHandler) ServeOpenAPI(c *gin.Context) {
 		return
 	}
 
-	// Determine the correct scheme and host from the request (handles proxies)
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	} else if proto := c.GetHeader("X-Forwarded-Proto"); proto != "" {
-		scheme = proto
-	}
-
-	host := c.GetHeader("X-Forwarded-Host")
-	if host == "" {
-		host = c.Request.Host
-	}
-
-	productionURL := scheme + "://" + host
+	productionURL := resolveDocsBaseURL(c)
 	yaml := strings.ReplaceAll(string(content), "http://localhost:8080", productionURL)
 	c.String(http.StatusOK, yaml)
 }
@@ -86,4 +76,43 @@ func (h *DocsHandler) ServeStatic(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/javascript", content)
+}
+
+func resolveDocsBaseURL(c *gin.Context) string {
+	host := c.GetHeader("X-Forwarded-Host")
+	if host == "" {
+		host = c.Request.Host
+	}
+
+	if host == "" {
+		return canonicalProductionBaseURL
+	}
+
+	if isLoopbackHost(host) && gin.Mode() == gin.ReleaseMode {
+		return canonicalProductionBaseURL
+	}
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	} else if proto := c.GetHeader("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	}
+
+	return scheme + "://" + host
+}
+
+func isLoopbackHost(host string) bool {
+	hostOnly := host
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		hostOnly = parsedHost
+	}
+
+	hostOnly = strings.Trim(hostOnly, "[]")
+	switch hostOnly {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	default:
+		return false
+	}
 }
