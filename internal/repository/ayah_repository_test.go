@@ -166,3 +166,47 @@ func TestAyahRepository_FindByID_NotFound(t *testing.T) {
 		t.Fatal("expected nil, got data")
 	}
 }
+
+var createTablesSajda = `
+CREATE TABLE surahs (
+	id INTEGER PRIMARY KEY,
+	name_latin TEXT NOT NULL
+);
+CREATE TABLE ayahs (
+	id INTEGER PRIMARY KEY,
+	surah_id INTEGER NOT NULL,
+	number_in_surah INTEGER NOT NULL,
+	text_uthmani TEXT NOT NULL,
+	translation_indo TEXT NOT NULL,
+	translation_en TEXT NOT NULL,
+	juz_number INTEGER NOT NULL,
+	sajda_type TEXT
+);
+`
+
+var seedTablesSajda = `
+INSERT INTO surahs (id, name_latin) VALUES (7, 'Al-A''raf'), (13, 'Ar-Ra''d');
+
+INSERT INTO ayahs (id, surah_id, number_in_surah, text_uthmani, translation_indo, translation_en, juz_number, sajda_type)
+VALUES
+	(206, 7, 206, 'text1', 'terjemah1', 'translation1', 9, 'recommended'),
+	(1722, 13, 15, 'text2', 'terjemah2', 'translation2', 13, 'recommended'),
+	(1, 7, 1, 'noSajda', 'tanpa sajda', 'no sajda', 9, NULL);
+`
+
+func TestAyahRepository_FindSajda(t *testing.T) {
+	db := setupTestDB(t, createTablesSajda, seedTablesSajda)
+	repo := repository.NewAyahRepository(db)
+
+	sajdas, err := repo.FindSajda(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(sajdas) != 2 {
+		t.Fatalf("expected 2 sajda ayahs, got %d", len(sajdas))
+	}
+	if sajdas[0].SurahNameLatin != "Al-A'raf" || sajdas[0].SajdaType != "recommended" {
+		t.Errorf("unexpected first sajda: name=%s type=%s", sajdas[0].SurahNameLatin, sajdas[0].SajdaType)
+	}
+}

@@ -103,3 +103,27 @@ func TestSurahRepository_FindByID_NotFound(t *testing.T) {
 		t.Fatalf("expected nil, got %+v", surah)
 	}
 }
+
+func TestSurahRepository_FindByRevelationType(t *testing.T) {
+	db := setupTestDB(t, createTableSurah, seedTableSurah)
+	repo := repository.NewSurahRepository(db)
+
+	ctx := context.Background()
+
+	medinan, err := repo.FindByRevelationType(ctx, "medinan")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(medinan) != 3 {
+		t.Fatalf("expected 3 medinan surahs, got %d", len(medinan))
+	}
+
+	// case-insensitive match
+	meccan, err := repo.FindByRevelationType(ctx, "MECCAN")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(meccan) != 1 || meccan[0].NameTransliteration != "Al-Fatihah" {
+		t.Fatalf("expected 1 meccan surah (Al-Fatihah), got %d", len(meccan))
+	}
+}
