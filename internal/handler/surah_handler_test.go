@@ -17,8 +17,9 @@ import (
 
 // mockSurahService is a test double for surah.SurahService.
 type mockSurahService struct {
-	getAllFn  func(ctx context.Context) ([]surah.Surah, error)
-	getByIDFn func(ctx context.Context, id int) (*surah.Surah, error)
+	getAllFn            func(ctx context.Context) ([]surah.Surah, error)
+	getByIDFn           func(ctx context.Context, id int) (*surah.Surah, error)
+	getByRevelationType func(ctx context.Context, revelationType string) ([]surah.Surah, error)
 }
 
 func (m *mockSurahService) GetAll(ctx context.Context) ([]surah.Surah, error) {
@@ -27,6 +28,10 @@ func (m *mockSurahService) GetAll(ctx context.Context) ([]surah.Surah, error) {
 
 func (m *mockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, error) {
 	return m.getByIDFn(ctx, id)
+}
+
+func (m *mockSurahService) GetByRevelationType(ctx context.Context, revelationType string) ([]surah.Surah, error) {
+	return m.getByRevelationType(ctx, revelationType)
 }
 
 func newTestRouter(h *handler.SurahHandler) *gin.Engine {
@@ -60,6 +65,63 @@ func TestSurahHandler_List_OK(t *testing.T) {
 	data, ok := body["data"].([]any)
 	if !ok || len(data) != 1 {
 		t.Fatalf("expected data array with 1 element, got %v", body["data"])
+	}
+}
+
+func TestSurahHandler_List_ByRevelationType_OK(t *testing.T) {
+	svc := &mockSurahService{
+		getByRevelationType: func(_ context.Context, revelationType string) ([]surah.Surah, error) {
+			if revelationType != "meccan" {
+				t.Fatalf("expected revelationType=meccan, got %s", revelationType)
+			}
+			return []surah.Surah{
+				{ID: 1, Number: 1, NameLatin: "Al-Fatihah", NumberOfAyahs: 7, RevelationType: "meccan"},
+			}, nil
+		},
+	}
+	r := newTestRouter(handler.NewSurahHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah?type=meccan", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	data, ok := body["data"].([]any)
+	if !ok || len(data) != 1 {
+		t.Fatalf("expected data array with 1 element, got %v", body["data"])
+	}
+}
+
+func TestSurahHandler_List_ByRevelationType_Invalid(t *testing.T) {
+	svc := &mockSurahService{}
+	r := newTestRouter(handler.NewSurahHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah?type=invalid", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestSurahHandler_List_ByRevelationType_InternalError(t *testing.T) {
+	svc := &mockSurahService{
+		getByRevelationType: func(_ context.Context, _ string) ([]surah.Surah, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	r := newTestRouter(handler.NewSurahHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/surah?type=medinan", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
 	}
 }
 
