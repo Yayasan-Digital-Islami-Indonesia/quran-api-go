@@ -4,7 +4,6 @@ import (
 	"embed"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -15,6 +14,9 @@ import (
 var staticFiles embed.FS
 
 const canonicalProductionBaseURL = "https://quran.api.digitalislami.id"
+
+//go:embed api-reference/openapi.yaml
+var openapiSpec []byte
 
 const scalarHTML = `<!doctype html>
 <html>
@@ -49,15 +51,24 @@ func (h *DocsHandler) ServeOpenAPI(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Cache-Control", "no-store")
 
-	// Read the swaggo-generated spec
-	content, err := os.ReadFile("./docs/api-reference/openapi.yaml")
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
+	productionURL := resolveDocsBaseURL(c)
+	yaml := string(openapiSpec)
+
+	// Replace localhost URLs with production/base URL
+	// OpenAPI format uses either "host: localhost:8080" or server URLs
+	if strings.Contains(yaml, "host: localhost:8080") {
+		// Extract the host from the production URL
+		hostOnly := productionURL
+		if idx := strings.Index(hostOnly, "://"); idx >= 0 {
+			hostOnly = hostOnly[idx+3:]
+		}
+		yaml = strings.ReplaceAll(yaml, "host: localhost:8080", "host: "+hostOnly)
 	}
 
-	productionURL := resolveDocsBaseURL(c)
-	yaml := strings.ReplaceAll(string(content), "http://localhost:8080", productionURL)
+	// Also replace any full localhost server URLs
+	yaml = strings.ReplaceAll(yaml, "http://localhost:8080", productionURL)
+	yaml = strings.ReplaceAll(yaml, "https://localhost:8080", productionURL)
+
 	c.String(http.StatusOK, yaml)
 }
 

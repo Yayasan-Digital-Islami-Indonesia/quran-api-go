@@ -60,6 +60,10 @@ func (m *MockAyahService) GetRandom(ctx context.Context, surahID int) (*ayah.Aya
 	return nil, nil
 }
 
+func (m *MockAyahService) GetSajda(ctx context.Context) ([]ayah.SajdaAyah, error) {
+	return nil, nil
+}
+
 type MockSurahService struct {
 	GetByIDFunc func(ctx context.Context, id int) (*surah.Surah, error)
 }
@@ -73,6 +77,10 @@ func (m *MockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, e
 		return m.GetByIDFunc(ctx, id)
 	}
 
+	return nil, nil
+}
+
+func (m *MockSurahService) GetByRevelationType(ctx context.Context, revelationType string) ([]surah.Surah, error) {
 	return nil, nil
 }
 

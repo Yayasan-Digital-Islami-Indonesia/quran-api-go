@@ -32,6 +32,10 @@ func (m *MockAyahRepository) FindRandom(ctx context.Context, surahID int) (*ayah
 	return nil, nil
 }
 
+func (m *MockAyahRepository) FindSajda(ctx context.Context) ([]ayah.SajdaAyah, error) {
+	return nil, nil
+}
+
 func TestAyahService_GetBySurahAndNumber(t *testing.T) {
 	ctx := context.Background()
 

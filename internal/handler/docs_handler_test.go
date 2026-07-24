@@ -58,8 +58,14 @@ func TestDocsHandler_OpenAPIRetainsLocalhostInTestMode(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
-	if !strings.Contains(w.Body.String(), "http://localhost:8080") {
-		t.Fatal("expected localhost URL to remain in test mode")
+	body := w.Body.String()
+	// In test mode, localhost should remain in the host field
+	if !strings.Contains(body, "host: localhost:8080") {
+		t.Fatal("expected 'host: localhost:8080' to remain in test mode")
+	}
+	// The host field should NOT contain production domain
+	if strings.Contains(body, "host: quran.api.digitalislami.id") {
+		t.Fatal("host field should not use production domain in test mode")
 	}
 }
 
@@ -85,11 +91,12 @@ func TestDocsHandler_OpenAPIUsesProductionURLInReleaseMode(t *testing.T) {
 	}
 
 	body := w.Body.String()
-	if strings.Contains(body, "http://localhost:8080") {
-		t.Fatal("expected localhost URL to be replaced in release mode")
+	// In release mode, localhost host should be replaced with production
+	if strings.Contains(body, "host: localhost:8080") {
+		t.Fatal("expected localhost:8080 to be replaced in release mode")
 	}
 
-	if !strings.Contains(body, "https://quran.api.digitalislami.id") {
+	if !strings.Contains(body, "digitalislami.id") {
 		t.Fatal("expected production URL in openapi output")
 	}
 }

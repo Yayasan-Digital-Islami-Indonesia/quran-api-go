@@ -29,6 +29,10 @@ func (m *mockSurahService) GetByID(ctx context.Context, id int) (*surah.Surah, e
 	return m.getByIDFn(ctx, id)
 }
 
+func (m *mockSurahService) GetByRevelationType(ctx context.Context, revelationType string) ([]surah.Surah, error) {
+	return nil, nil
+}
+
 func newTestRouter(h *handler.SurahHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
