@@ -166,3 +166,91 @@ func TestAyahRepository_FindByID_NotFound(t *testing.T) {
 		t.Fatal("expected nil, got data")
 	}
 }
+
+func TestAyahRepository_FindBySurah_All(t *testing.T) {
+	db := setupTestDB(t, createTableAyah, seedTableAyah)
+	repo := repository.NewAyahRepository(db)
+	ctx := context.Background()
+
+	ayahs, err := repo.FindBySurah(ctx, 1, 0, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(ayahs) != 7 {
+		t.Fatalf("expected 7 ayahs for surah 1, got %d", len(ayahs))
+	}
+
+	for i, a := range ayahs {
+		if a.NumberInSurah != i+1 {
+			t.Errorf("expected number_in_surah=%d, got %d", i+1, a.NumberInSurah)
+		}
+	}
+}
+
+func TestAyahRepository_FindBySurah_NotFound(t *testing.T) {
+	db := setupTestDB(t, createTableAyah, seedTableAyah)
+	repo := repository.NewAyahRepository(db)
+	ctx := context.Background()
+
+	ayahs, err := repo.FindBySurah(ctx, 999, 1, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(ayahs) != 0 {
+		t.Fatalf("expected 0 ayahs for non-existent surah, got %d", len(ayahs))
+	}
+}
+
+func TestAyahRepository_FindBySurahAndNumber_NotFound(t *testing.T) {
+	db := setupTestDB(t, createTableAyah, seedTableAyah)
+	repo := repository.NewAyahRepository(db)
+	ctx := context.Background()
+
+	ayah, err := repo.FindBySurahAndNumber(ctx, 1, 999)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if ayah != nil {
+		t.Fatal("expected nil, got data")
+	}
+}
+
+func TestAyahRepository_FindRandom_AllSurahs(t *testing.T) {
+	db := setupTestDB(t, createTableAyah, seedTableAyah)
+	repo := repository.NewAyahRepository(db)
+	ctx := context.Background()
+
+	ayah, err := repo.FindRandom(ctx, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if ayah == nil {
+		t.Fatal("expected ayah, got nil")
+	}
+}
+
+func TestAyahRepository_FindBySurah_Range(t *testing.T) {
+	db := setupTestDB(t, createTableAyah, seedTableAyah)
+	repo := repository.NewAyahRepository(db)
+	ctx := context.Background()
+
+	ayahs, err := repo.FindBySurah(ctx, 1, 3, 5)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(ayahs) != 3 {
+		t.Fatalf("expected 3 ayahs (3-5), got %d", len(ayahs))
+	}
+
+	if ayahs[0].NumberInSurah != 3 {
+		t.Errorf("expected first ayah number_in_surah=3, got %d", ayahs[0].NumberInSurah)
+	}
+	if ayahs[2].NumberInSurah != 5 {
+		t.Errorf("expected last ayah number_in_surah=5, got %d", ayahs[2].NumberInSurah)
+	}
+}

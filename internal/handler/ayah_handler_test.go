@@ -26,6 +26,7 @@ type MockAyahService struct {
 	GetBySurahFunc          func(ctx context.Context, surahID, from, to int) ([]ayah.Ayah, error)
 	GetBySurahAndNumberFunc func(ctx context.Context, surahID, number int) (*ayah.Ayah, error)
 	GetRandomFunc           func(ctx context.Context, surahID int) (*ayah.Ayah, error)
+	GetSajdaFunc            func(ctx context.Context) ([]ayah.SajdaAyah, error)
 }
 
 func (m *MockAyahService) GetByID(ctx context.Context, id int) (*ayah.Ayah, error) {
@@ -61,6 +62,9 @@ func (m *MockAyahService) GetRandom(ctx context.Context, surahID int) (*ayah.Aya
 }
 
 func (m *MockAyahService) GetSajda(ctx context.Context) ([]ayah.SajdaAyah, error) {
+	if m.GetSajdaFunc != nil {
+		return m.GetSajdaFunc(ctx)
+	}
 	return nil, nil
 }
 
@@ -91,6 +95,7 @@ func setupRouter(h *handler.AyahHandler) *gin.Engine {
 	r.GET("/surah/:id/ayah", h.BySurah)
 	r.GET("/surah/:id/ayah/:number", h.BySurahAndNumber)
 	r.GET("/random", h.RandomAyah)
+	r.GET("/sajda", h.Sajda)
 	return r
 }
 
@@ -735,6 +740,151 @@ func TestAyahHandler_RandomAyah(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/random?surah_id=1", nil))
+
+		if w.Code != http.StatusInternalServerError {
+			t.Fatalf("expected status 500, got %d", w.Code)
+		}
+	})
+}
+
+func TestAyahHandler_Sajda(t *testing.T) {
+	t.Run("Success default lang", func(t *testing.T) {
+		sajdaType := "recommended"
+		mockAyahService := &MockAyahService{
+			GetSajdaFunc: func(ctx context.Context) ([]ayah.SajdaAyah, error) {
+				return []ayah.SajdaAyah{
+					{
+						AyahID:         7,
+						SurahID:        2,
+						SurahNameLatin: "Al-Baqarah",
+						NumberInSurah:  255,
+						TextUthmani:    "Ayat al-Kursi",
+						TranslationIdo: "Ayat Kursi",
+						TranslationEn:  "Verse of the Throne",
+						JuzNumber:      3,
+						SajdaType:      sajdaType,
+					},
+				}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sajda", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+
+		data := decodeBody(t, w.Body.Bytes())
+		results, ok := data["data"].([]any)
+		if !ok {
+			t.Fatalf("expected data array, got %T", data["data"])
+		}
+		if len(results) != 1 {
+			t.Fatalf("expected 1 sajda result, got %d", len(results))
+		}
+
+		first := results[0].(map[string]any)
+		if first["id"] != float64(7) {
+			t.Fatalf("expected id=7, got %v", first["id"])
+		}
+		if first["surah_id"] != float64(2) {
+			t.Fatalf("expected surah_id=2, got %v", first["surah_id"])
+		}
+		if first["surah_name"] != "Al-Baqarah" {
+			t.Fatalf("expected surah_name=Al-Baqarah, got %v", first["surah_name"])
+		}
+		if first["translation"] != "Ayat Kursi" {
+			t.Fatalf("expected Indonesian translation, got %v", first["translation"])
+		}
+		if first["sajda_type"] != "recommended" {
+			t.Fatalf("expected sajda_type=recommended, got %v", first["sajda_type"])
+		}
+	})
+
+	t.Run("Success english lang", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetSajdaFunc: func(ctx context.Context) ([]ayah.SajdaAyah, error) {
+				return []ayah.SajdaAyah{
+					{
+						AyahID:         7,
+						SurahID:        2,
+						SurahNameLatin: "Al-Baqarah",
+						NumberInSurah:  255,
+						TextUthmani:    "Ayat al-Kursi",
+						TranslationIdo: "Ayat Kursi",
+						TranslationEn:  "Verse of the Throne",
+						JuzNumber:      3,
+						SajdaType:      "recommended",
+					},
+				}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sajda?lang=en", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+
+		data := decodeBody(t, w.Body.Bytes())
+		results := data["data"].([]any)
+		first := results[0].(map[string]any)
+		if first["translation"] != "Verse of the Throne" {
+			t.Fatalf("expected English translation, got %v", first["translation"])
+		}
+	})
+
+	t.Run("Invalid lang", func(t *testing.T) {
+		r := setupRouter(handler.NewAyahHandler(&MockAyahService{}, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sajda?lang=fr", nil))
+
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+	})
+
+	t.Run("Empty results", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetSajdaFunc: func(ctx context.Context) ([]ayah.SajdaAyah, error) {
+				return []ayah.SajdaAyah{}, nil
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sajda", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+
+		data := decodeBody(t, w.Body.Bytes())
+		results := data["data"].([]any)
+		if len(results) != 0 {
+			t.Fatalf("expected empty results, got %d", len(results))
+		}
+	})
+
+	t.Run("Service error", func(t *testing.T) {
+		mockAyahService := &MockAyahService{
+			GetSajdaFunc: func(ctx context.Context) ([]ayah.SajdaAyah, error) {
+				return nil, errors.New("db error")
+			},
+		}
+
+		r := setupRouter(handler.NewAyahHandler(mockAyahService, &MockSurahService{}))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sajda", nil))
 
 		if w.Code != http.StatusInternalServerError {
 			t.Fatalf("expected status 500, got %d", w.Code)

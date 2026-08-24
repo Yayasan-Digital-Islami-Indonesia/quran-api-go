@@ -2,51 +2,80 @@ package handler_test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
-	_ "modernc.org/sqlite"
-	"quran-api-go/internal/handler"
-	"quran-api-go/internal/repository"
-	"quran-api-go/internal/service"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+
+	"quran-api-go/internal/domain"
+	"quran-api-go/internal/domain/juz"
+	"quran-api-go/internal/handler"
 )
 
-// TestJuzHandler_ListResponse_IncludesTotalAyahs verifies list response has total_ayahs
-func TestJuzHandler_ListResponse_IncludesTotalAyahs(t *testing.T) {
+type mockJuzService struct {
+	getAllFn         func(ctx context.Context) ([]juz.Juz, error)
+	getByNumberFn    func(ctx context.Context, number int) (*juz.Juz, error)
+	getAyahsByJuzFn  func(ctx context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error)
+	getSurahsByJuzFn func(ctx context.Context, juzNumber int) ([]juz.JuzSurah, error)
+}
+
+func (m *mockJuzService) GetAll(ctx context.Context) ([]juz.Juz, error) {
+	if m.getAllFn != nil {
+		return m.getAllFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *mockJuzService) GetByNumber(ctx context.Context, number int) (*juz.Juz, error) {
+	if m.getByNumberFn != nil {
+		return m.getByNumberFn(ctx, number)
+	}
+	return nil, nil
+}
+
+func (m *mockJuzService) GetAyahsByJuz(ctx context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error) {
+	if m.getAyahsByJuzFn != nil {
+		return m.getAyahsByJuzFn(ctx, juzNumber, limit, offset)
+	}
+	return nil, nil
+}
+
+func (m *mockJuzService) GetSurahsByJuz(ctx context.Context, juzNumber int) ([]juz.JuzSurah, error) {
+	if m.getSurahsByJuzFn != nil {
+		return m.getSurahsByJuzFn(ctx, juzNumber)
+	}
+	return nil, nil
+}
+
+func setupJuzRouter(h *handler.JuzHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-
-	db, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
-	// Setup schema - need both tables for the JOIN
-	db.ExecContext(context.Background(), `
-		CREATE TABLE juzs (id INTEGER PRIMARY KEY, juz_number INTEGER, first_ayah_id INTEGER, last_ayah_id INTEGER);
-		CREATE TABLE ayahs (id INTEGER PRIMARY KEY, juz_number INTEGER);
-
-		INSERT INTO juzs (id, juz_number, first_ayah_id, last_ayah_id) VALUES (1, 1, 1, 7);
-		-- Insert 7 ayahs for juz 1
-		INSERT INTO ayahs (id, juz_number) VALUES (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1);
-	`)
-
-	repo := repository.NewJuzRepository(db)
-	svc := service.NewJuzService(repo)
-	h := handler.NewJuzHandler(svc)
 	r.GET("/juz", h.List)
+	r.GET("/juz/:number", h.Detail)
+	r.GET("/juz/:number/ayah", h.Ayahs)
+	r.GET("/juz/:number/surah", h.Surahs)
+	return r
+}
+
+func TestJuzHandler_List_Success(t *testing.T) {
+	svc := &mockJuzService{
+		getAllFn: func(_ context.Context) ([]juz.Juz, error) {
+			return []juz.Juz{
+				{ID: 1, JuzNumber: 1, FirstAyahID: 1, LastAyahID: 141, TotalAyahs: 141},
+				{ID: 2, JuzNumber: 2, FirstAyahID: 142, LastAyahID: 252, TotalAyahs: 111},
+			}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/juz", nil)
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz", nil))
 
 	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
 	var body map[string]any
@@ -55,56 +84,102 @@ func TestJuzHandler_ListResponse_IncludesTotalAyahs(t *testing.T) {
 	}
 
 	data, ok := body["data"].([]any)
-	if !ok {
-		t.Fatalf("expected data array, got %T", body["data"])
-	}
-
-	if len(data) == 0 {
-		t.Fatal("expected at least one juz")
-	}
-
-	juz := data[0].(map[string]any)
-	if juz["total_ayahs"] == nil {
-		t.Errorf("Juz list response missing 'total_ayahs' field. Got keys: %v", getMapKeys(juz))
-	}
-
-	// Verify the count is correct
-	totalAyahs := int(juz["total_ayahs"].(float64))
-	if totalAyahs != 7 {
-		t.Errorf("Expected total_ayahs=7, got %d", totalAyahs)
+	if !ok || len(data) != 2 {
+		t.Fatalf("expected data array with 2 elements, got %v", body["data"])
 	}
 }
 
-// TestJuzHandler_AyahsResponse_WrappedStructure verifies ayahs response has correct structure
-func TestJuzHandler_AyahsResponse_WrappedStructure(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	r := gin.New()
-
-	db, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		t.Fatal(err)
+func TestJuzHandler_List_InternalError(t *testing.T) {
+	svc := &mockJuzService{
+		getAllFn: func(_ context.Context) ([]juz.Juz, error) {
+			return nil, errors.New("db error")
+		},
 	}
-	defer db.Close()
-
-	db.ExecContext(context.Background(), `
-		CREATE TABLE surahs (id INTEGER PRIMARY KEY, name_latin TEXT);
-		CREATE TABLE ayahs (id INTEGER PRIMARY KEY, surah_id INTEGER, number_in_surah INTEGER, text_uthmani TEXT, translation_indo TEXT, translation_en TEXT, juz_number INTEGER);
-		CREATE TABLE juzs (id INTEGER PRIMARY KEY, juz_number INTEGER, first_ayah_id INTEGER, last_ayah_id INTEGER, total_ayahs INTEGER);
-
-		INSERT INTO surahs (id, name_latin) VALUES (1, 'Al-Fatihah');
-		INSERT INTO juzs (id, juz_number, first_ayah_id, last_ayah_id, total_ayahs) VALUES (1, 1, 1, 7, 7);
-		INSERT INTO ayahs (id, surah_id, number_in_surah, text_uthmani, translation_indo, translation_en, juz_number)
-		VALUES (1, 1, 1, 'bismillah', 'bismillah', 'bismillah', 1);
-	`)
-
-	repo := repository.NewJuzRepository(db)
-	svc := service.NewJuzService(repo)
-	h := handler.NewJuzHandler(svc)
-	r.GET("/juz/:number/ayah", h.Ayahs)
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/juz/1/ayah", nil)
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Detail_Success(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: number, FirstAyahID: 1, LastAyahID: 141, TotalAyahs: 141}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Detail_InvalidNumber(t *testing.T) {
+	svc := &mockJuzService{}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/abc", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Detail_NotFound(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return nil, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/99", nil))
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Detail_InternalError(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Ayahs_Success(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: 1, TotalAyahs: 7}, nil
+		},
+		getAyahsByJuzFn: func(_ context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error) {
+			return []juz.JuzAyah{
+				{AyahID: 1, SurahID: 1, SurahNameLatin: "Al-Fatihah", NumberInSurah: 1, TextUthmani: "Bismillah", TranslationIdo: "Dengan nama Allah", TranslationEn: "In the name of Allah", JuzNumber: 1},
+			}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/ayah", nil))
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
@@ -121,17 +196,190 @@ func TestJuzHandler_AyahsResponse_WrappedStructure(t *testing.T) {
 	}
 
 	if data["juz"] == nil {
-		t.Errorf("Response missing 'juz' wrapper. Got keys: %v", getMapKeys(data))
+		t.Errorf("response missing 'juz' wrapper")
 	}
 	if data["ayahs"] == nil {
-		t.Errorf("Response missing 'ayahs' array. Got keys: %v", getMapKeys(data))
+		t.Errorf("response missing 'ayahs' array")
 	}
 }
 
-func getMapKeys(m map[string]any) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
+func TestJuzHandler_Ayahs_InvalidNumber(t *testing.T) {
+	svc := &mockJuzService{}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/abc/ayah", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
-	return keys
+}
+
+func TestJuzHandler_Ayahs_InvalidLang(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: 1, TotalAyahs: 7}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/ayah?lang=fr", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Ayahs_NotFound(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return nil, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/99/ayah", nil))
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Ayahs_InternalError(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: 1, TotalAyahs: 7}, nil
+		},
+		getAyahsByJuzFn: func(_ context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/ayah", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Ayahs_ErrNotFound(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: 1, TotalAyahs: 7}, nil
+		},
+		getAyahsByJuzFn: func(_ context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/ayah", nil))
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Ayahs_EnglishLang(t *testing.T) {
+	svc := &mockJuzService{
+		getByNumberFn: func(_ context.Context, number int) (*juz.Juz, error) {
+			return &juz.Juz{ID: 1, JuzNumber: 1, TotalAyahs: 7}, nil
+		},
+		getAyahsByJuzFn: func(_ context.Context, juzNumber, limit, offset int) ([]juz.JuzAyah, error) {
+			return []juz.JuzAyah{
+				{AyahID: 1, SurahID: 1, SurahNameLatin: "Al-Fatihah", NumberInSurah: 1, TextUthmani: "Bismillah", TranslationIdo: "Dengan nama Allah", TranslationEn: "In the name of Allah", JuzNumber: 1},
+			}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/ayah?lang=en", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	data := body["data"].(map[string]any)
+	ayahs := data["ayahs"].([]any)
+	first := ayahs[0].(map[string]any)
+
+	if first["translation"] != "In the name of Allah" {
+		t.Fatalf("expected English translation, got %v", first["translation"])
+	}
+}
+
+func TestJuzHandler_Surahs_Success(t *testing.T) {
+	svc := &mockJuzService{
+		getSurahsByJuzFn: func(_ context.Context, juzNumber int) ([]juz.JuzSurah, error) {
+			return []juz.JuzSurah{
+				{ID: 1, Number: 1, NameArabic: "الفاتحة", NameLatin: "Al-Fatihah", NameTransliteration: "Al-Fatihah", NumberOfAyahs: 7, RevelationType: "meccan"},
+			}, nil
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/surah", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	data, ok := body["data"].([]any)
+	if !ok || len(data) != 1 {
+		t.Fatalf("expected data array with 1 element, got %v", body["data"])
+	}
+}
+
+func TestJuzHandler_Surahs_InvalidNumber(t *testing.T) {
+	svc := &mockJuzService{}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/abc/surah", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Surahs_OutOfRange(t *testing.T) {
+	svc := &mockJuzService{}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/31/surah", nil))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestJuzHandler_Surahs_InternalError(t *testing.T) {
+	svc := &mockJuzService{
+		getSurahsByJuzFn: func(_ context.Context, juzNumber int) ([]juz.JuzSurah, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	r := setupJuzRouter(handler.NewJuzHandler(svc))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/juz/1/surah", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
 }
